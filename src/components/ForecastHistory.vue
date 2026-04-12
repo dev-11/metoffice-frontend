@@ -69,7 +69,7 @@ const error = ref<string | null>(null)
 
 onMounted(async () => {
   try {
-    const { data } = await axios.get('https://api.masterbranch.io/b/metoffice')
+    const { data } = await axios.get(`${import.meta.env.VITE_API_BASE}/b/metoffice`)
     const normalized: DayHistory[] = (data.forecast as DayHistory[]).map(day => ({
       ...day,
       target_date: day.target_date.slice(0, 10),
