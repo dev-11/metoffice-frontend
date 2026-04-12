@@ -11,7 +11,7 @@ import { RouterView } from 'vue-router'
 body {
   font-family: system-ui, sans-serif;
   background: #f5f5f3;
-  color: #1a1a1a;
+  color: #44403c;
   padding: 2rem;
   overflow-x: hidden;
 }

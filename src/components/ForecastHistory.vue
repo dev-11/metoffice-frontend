@@ -389,7 +389,7 @@ function onDayEntries(day: DayHistory) {
 }
 
 .day-card--today {
-  border: 2px solid #1a1a1a;
+  border: 2px solid #44403c;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
@@ -400,7 +400,7 @@ function onDayEntries(day: DayHistory) {
 .today-badge {
   font-size: 22px;
   font-weight: 600;
-  background: #1a1a1a;
+  background: #44403c;
   color: #fff;
   padding: 4px 12px;
   border-radius: 20px;
@@ -499,7 +499,7 @@ function onDayEntries(day: DayHistory) {
 .day-weekday {
   font-size: 22px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #44403c;
   text-transform: capitalize;
 }
 
@@ -576,6 +576,6 @@ function onDayEntries(day: DayHistory) {
 .tl-front {
   font-size: 12px;
   font-weight: 500;
-  color: #1a1a1a;
+  color: #44403c;
 }
 </style>
