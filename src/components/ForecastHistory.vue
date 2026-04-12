@@ -10,6 +10,8 @@ interface Forecast {
 interface DayHistory {
   target_date: string
   forecasts: Forecast[]
+  temp_min?: number
+  temp_max?: number
 }
 
 const FRONT_TYPE_MAP: Record<string, string> = {
@@ -307,9 +309,9 @@ const days = computed(() => history.value.map(day => {
   tomorrow.setDate(today.getDate() + 1)
   const yesterday = new Date(today)
   yesterday.setDate(today.getDate() - 1)
-  const isToday = day.target_date === today.toISOString().slice(0, 10)
-  const isTomorrow = day.target_date === tomorrow.toISOString().slice(0, 10)
-  const isYesterday = day.target_date === yesterday.toISOString().slice(0, 10)
+  const isToday = day.target_date === today.toLocaleDateString('en-CA')
+  const isTomorrow = day.target_date === tomorrow.toLocaleDateString('en-CA')
+  const isYesterday = day.target_date === yesterday.toLocaleDateString('en-CA')
   return { ...day, latest, style, bg, hasOnDayChanges, isToday, isTomorrow, isYesterday }
 }))
 
@@ -341,6 +343,9 @@ function onDayEntries(day: DayHistory) {
             <span class="day-date">{{ fmtShortDate(day.target_date) }}</span>
           </div>
           <span class="front-pill" :class="day.style.pill">{{ day.style.label }}</span>
+          <div class="weather-col">
+            <span class="weather-temp">{{ day.temp_min ?? '–' }}° / {{ day.temp_max ?? '–' }}°</span>
+          </div>
         </div>
         <div v-if="day.hasOnDayChanges" class="card-right">
           <div class="timeline">
@@ -482,6 +487,9 @@ function onDayEntries(day: DayHistory) {
   .day-date { font-size: 13px !important; }
   .front-pill { font-size: 14px !important; padding: 6px 14px !important; }
   .today-badge, .tomorrow-badge, .yesterday-badge { font-size: 13px !important; padding: 3px 10px !important; }
+  .weather-temp { font-size: 14px !important; }
+  .weather-temp { font-size: 18px; }
+  .weather-wind { font-size: 16px; }
 }
 
 .card-cold       { background: #e6f1fb; border-color: #b5d4f4; }
@@ -515,6 +523,20 @@ function onDayEntries(day: DayHistory) {
   padding: 10px 16px;
   border-radius: 12px;
   white-space: nowrap;
+}
+
+.weather-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.weather-temp {
+  font-size: 18px;
+  font-weight: 600;
+  color: #44403c;
 }
 
 .front-cold       { background: #e6f1fb; color: #0c447c; }
