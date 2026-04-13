@@ -484,10 +484,25 @@ function onDayEntries(day: DayHistory) {
   .forecast-history {
     padding: 0;
   }
+  .card-left {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 4px 12px;
+    align-items: center;
+  }
   .card-date-block {
+    grid-column: 1;
+    grid-row: 1 / 3;
     width: auto;
-    flex: 1;
-    min-width: 0;
+  }
+  .card-left > .front-pill {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .weather-col {
+    grid-column: 2;
+    grid-row: 2;
   }
 }
 
