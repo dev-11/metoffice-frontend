@@ -2,16 +2,20 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 
+interface ForecastData {
+  front_type: string
+  temp_min?: string
+  temp_max?: string
+}
+
 interface Forecast {
   observed_at: string
-  front_type: string
+  data: ForecastData
 }
 
 interface DayHistory {
   target_date: string
   forecasts: Forecast[]
-  temp_min?: number
-  temp_max?: number
 }
 
 const FRONT_TYPE_MAP: Record<string, string> = {
@@ -59,7 +63,7 @@ function fmtShortDate(dateStr: string) {
 function cardBackground(day: DayHistory) {
   const changedOnDay = day.forecasts.filter(f => f.observed_at.slice(0, 10) === day.target_date)
   if (changedOnDay.length < 2) return null
-  const uniqueTypes = [...new Set(changedOnDay.map(f => f.front_type))]
+  const uniqueTypes = [...new Set(changedOnDay.map(f => f.data.front_type))]
   if (uniqueTypes.length < 2) return null
   const colors = uniqueTypes.map(t => FRONT_COLORS[t] || '#f1efe8')
   return `linear-gradient(to right, ${colors[0]}, ${colors[colors.length - 1]})`
@@ -77,7 +81,10 @@ onMounted(async () => {
       target_date: day.target_date.slice(0, 10),
       forecasts: day.forecasts.map(f => ({
         ...f,
-        front_type: normalizeFrontType(f.front_type),
+        data: {
+          ...f.data,
+          front_type: normalizeFrontType(f.data.front_type),
+        },
       })),
     }))
     history.value = normalized.sort((a, b) => b.target_date.localeCompare(a.target_date))
@@ -88,7 +95,6 @@ onMounted(async () => {
   }
 })
 
-// kept only for legacy reference, no longer used
 const _sampleHistory: DayHistory[] = [
   { target_date: '2026-02-01', forecasts: [
     { observed_at: '2026-01-30T08:00:00Z', front_type: 'warm_front' },
@@ -300,7 +306,10 @@ const _sampleHistory: DayHistory[] = [
 
 const days = computed(() => history.value.map(day => {
   const latest = day.forecasts[day.forecasts.length - 1]
-  const style = frontStyle(latest.front_type)
+  const style = frontStyle(latest.data.front_type)
+  const latestWithTemp = [...day.forecasts].reverse().find(f => f.data.temp_min && f.data.temp_max)
+  const temp_min = latestWithTemp?.data.temp_min
+  const temp_max = latestWithTemp?.data.temp_max
   const bg = cardBackground(day)
   const changedOnDay = day.forecasts.filter(f => f.observed_at.slice(0, 10) === day.target_date)
   const hasOnDayChanges = changedOnDay.length >= 2
@@ -312,7 +321,7 @@ const days = computed(() => history.value.map(day => {
   const isToday = day.target_date === today.toLocaleDateString('en-CA')
   const isTomorrow = day.target_date === tomorrow.toLocaleDateString('en-CA')
   const isYesterday = day.target_date === yesterday.toLocaleDateString('en-CA')
-  return { ...day, latest, style, bg, hasOnDayChanges, isToday, isTomorrow, isYesterday }
+  return { ...day, latest, style, bg, hasOnDayChanges, isToday, isTomorrow, isYesterday, temp_min, temp_max }
 }))
 
 function onDayEntries(day: DayHistory) {
@@ -343,17 +352,17 @@ function onDayEntries(day: DayHistory) {
             <span class="day-date">{{ fmtShortDate(day.target_date) }}</span>
           </div>
           <span class="front-pill" :class="day.style.pill">{{ day.style.label }}</span>
-          <div class="weather-col">
-            <span class="weather-temp">{{ day.temp_min ?? '–' }}° / {{ day.temp_max ?? '–' }}°</span>
+          <div v-if="day.temp_min && day.temp_max" class="weather-col">
+            <span class="weather-temp">{{ day.temp_min }} / {{ day.temp_max }}</span>
           </div>
         </div>
         <div v-if="day.hasOnDayChanges" class="card-right">
           <div class="timeline">
             <template v-for="(entry, i) in onDayEntries(day)" :key="i">
               <div class="timeline-row">
-                <div class="dot" :class="frontStyle(entry.front_type).dot"></div>
+                <div class="dot" :class="frontStyle(entry.data.front_type).dot"></div>
                 <span class="tl-time">{{ fmt(entry.observed_at) }}</span>
-                <span class="tl-front">{{ frontStyle(entry.front_type).short }}</span>
+                <span class="tl-front">{{ frontStyle(entry.data.front_type).short }}</span>
               </div>
               <div v-if="i < onDayEntries(day).length - 1" class="timeline-connector">
                 <div class="connector-wrap">
