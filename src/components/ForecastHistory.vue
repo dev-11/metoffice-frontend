@@ -492,17 +492,27 @@ function onDayEntries(day: DayHistory) {
     align-items: center;
   }
   .card-date-block {
+    display: contents;
+  }
+  .card-title-row {
     grid-column: 1;
-    grid-row: 1 / 3;
-    width: auto;
+    grid-row: 1;
+    align-self: center;
+  }
+  .day-date {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: center;
   }
   .card-left > .front-pill {
     grid-column: 2;
     grid-row: 1;
+    align-self: center;
   }
   .weather-col {
     grid-column: 2;
     grid-row: 2;
+    align-self: center;
   }
 }
 
@@ -512,7 +522,7 @@ function onDayEntries(day: DayHistory) {
   .front-pill { font-size: 14px !important; padding: 6px 14px !important; }
   .today-badge, .tomorrow-badge { font-size: 13px !important; padding: 3px 10px !important; }
   .yesterday-badge { font-size: 16px !important; }
-  .weather-temp { font-size: 14px !important; }
+  .weather-temp { font-size: 14px !important; padding-left: 14px !important; }
   .weather-temp { font-size: 18px; }
   .weather-wind { font-size: 16px; }
 }
@@ -563,6 +573,7 @@ function onDayEntries(day: DayHistory) {
   font-size: 18px;
   font-weight: 600;
   color: #44403c;
+  padding-left: 16px;
 }
 
 .front-cold       { background: #e6f1fb; color: #0c447c; }
