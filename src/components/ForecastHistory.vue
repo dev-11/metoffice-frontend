@@ -24,6 +24,7 @@ const FRONT_TYPE_MAP: Record<string, string> = {
   'Nincs front':         'no_front',
   'Stacionárius front':  'stationary_front',
   'Stacionáris front':   'stationary_front',
+  'Kettős front':        'double_front',
 }
 
 function normalizeFrontType(raw: string): string {
@@ -35,6 +36,7 @@ const FRONT_STYLES: Record<string, { pill: string; dot: string; label: string; s
   warm_front:       { pill: 'front-warm',       dot: 'dot-warm',       label: 'Melegfront',          short: 'Melegfront',   card: 'card-warm' },
   no_front:         { pill: 'front-no',         dot: 'dot-no',         label: 'Nincs front',         short: 'Nincs front',  card: 'card-no' },
   stationary_front: { pill: 'front-stationary', dot: 'dot-stationary', label: 'Stacionárius front',  short: 'Stacionárius', card: 'card-stationary' },
+  double_front:     { pill: 'front-double',     dot: 'dot-double',     label: 'Kettős front',        short: 'Kettős front', card: 'card-double' },
 }
 
 const FRONT_COLORS: Record<string, string> = {
@@ -42,6 +44,7 @@ const FRONT_COLORS: Record<string, string> = {
   warm_front:       '#fef2f2',
   no_front:         '#f1efe8',
   stationary_front: '#fff7ed',
+  double_front:     '#ede9fe',
 }
 
 function frontStyle(ft: string) {
@@ -61,9 +64,9 @@ function fmtShortDate(dateStr: string) {
 }
 
 function cardBackground(day: DayHistory) {
-  const changedOnDay = day.forecasts.filter(f => f.observed_at.slice(0, 10) === day.target_date)
-  if (changedOnDay.length < 2) return null
-  const uniqueTypes = [...new Set(changedOnDay.map(f => f.data.front_type))]
+  const sameDayForecasts = day.forecasts.filter(f => f.observed_at.slice(0, 10) === day.target_date)
+  if (sameDayForecasts.length < 2) return null
+  const uniqueTypes = [...new Set(sameDayForecasts.map(f => f.data.front_type))]
   if (uniqueTypes.length < 2) return null
   const colors = uniqueTypes.map(t => FRONT_COLORS[t] || '#f1efe8')
   return `linear-gradient(to right, ${colors[0]}, ${colors[colors.length - 1]})`
@@ -351,7 +354,7 @@ function onDayEntries(day: DayHistory) {
             </div>
             <span class="day-date">{{ fmtShortDate(day.target_date) }}</span>
           </div>
-          <span class="front-pill" :class="day.style.pill">{{ day.style.label }}</span>
+          <span class="front-pill" :class="day.bg ? 'front-mixed' : day.style.pill">{{ day.style.label }}</span>
           <div v-if="day.temp_min && day.temp_max" class="weather-col">
             <span class="weather-temp">{{ day.temp_min }} / {{ day.temp_max }}</span>
           </div>
@@ -432,11 +435,8 @@ function onDayEntries(day: DayHistory) {
 
 .yesterday-badge {
   font-size: 22px;
-  font-weight: 400;
-  color: #bbb;
-  border: 1px solid #e0e0e0;
-  padding: 4px 12px;
-  border-radius: 20px;
+  font-weight: 600;
+  color: #44403c;
 }
 
 .card-body {
@@ -510,7 +510,8 @@ function onDayEntries(day: DayHistory) {
   .day-weekday { font-size: 16px !important; }
   .day-date { font-size: 13px !important; }
   .front-pill { font-size: 14px !important; padding: 6px 14px !important; }
-  .today-badge, .tomorrow-badge, .yesterday-badge { font-size: 13px !important; padding: 3px 10px !important; }
+  .today-badge, .tomorrow-badge { font-size: 13px !important; padding: 3px 10px !important; }
+  .yesterday-badge { font-size: 16px !important; }
   .weather-temp { font-size: 14px !important; }
   .weather-temp { font-size: 18px; }
   .weather-wind { font-size: 16px; }
@@ -520,6 +521,7 @@ function onDayEntries(day: DayHistory) {
 .card-warm       { background: #fef2f2; border-color: #fca5a5; }
 .card-no         { background: #f1efe8; border-color: #d3d1c7; }
 .card-stationary { background: #fff7ed; border-color: #fdba74; }
+.card-double     { background: #ede9fe; border-color: #c4b5fd; }
 
 .card-title-row {
   display: flex;
@@ -567,6 +569,8 @@ function onDayEntries(day: DayHistory) {
 .front-warm       { background: #fef2f2; color: #991b1b; }
 .front-no         { background: #f1efe8; color: #444441; }
 .front-stationary { background: #fff7ed; color: #9a3412; }
+.front-double     { background: #ede9fe; color: #5b21b6; }
+.front-mixed      { background: rgba(255, 255, 255, 0.55); color: #44403c; }
 
 .timeline {
   padding-top: 0;
@@ -612,6 +616,7 @@ function onDayEntries(day: DayHistory) {
 .dot-warm       { background: #fca5a5; border-color: #ef4444; }
 .dot-no         { background: #d3d1c7; border-color: #888780; }
 .dot-stationary { background: #fdba74; border-color: #f97316; }
+.dot-double     { background: #c4b5fd; border-color: #7c3aed; }
 
 .tl-time {
   font-size: 12px;
