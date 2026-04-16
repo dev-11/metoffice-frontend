@@ -132,34 +132,33 @@ onMounted(async () => {
 
 const _sampleHistory: DayHistory[] = [
   { target_date: '2026-04-16', forecasts: [
-    { observed_at: '2026-04-16T06:00:00Z', data: { front_type: 'warm_front', temp_min: '10°C', temp_max: '18°C' } },
-    { observed_at: '2026-04-16T14:00:00Z', data: { front_type: 'cold_front', temp_min: '7°C', temp_max: '14°C' } },
+    { observed_at: '2026-04-16T06:00:00Z', data: { front_type: 'warm_front', temp_min: '+10 °C', temp_max: '+18 °C' } },
+    { observed_at: '2026-04-16T14:00:00Z', data: { front_type: 'cold_front', temp_min: '+7 °C', temp_max: '+14 °C' } },
   ]},
   { target_date: '2026-04-17', forecasts: [
-    { observed_at: '2026-04-15T08:00:00Z', data: { front_type: 'cold_front', temp_min: '5°C', temp_max: '12°C' } },
-    { observed_at: '2026-04-16T08:00:00Z', data: { front_type: 'stationary_front', temp_min: '6°C', temp_max: '13°C' } },
-    { observed_at: '2026-04-17T06:00:00Z', data: { front_type: 'cold_front', temp_min: '4°C', temp_max: '11°C' } },
-    { observed_at: '2026-04-17T16:00:00Z', data: { front_type: 'warm_front', temp_min: '8°C', temp_max: '15°C' } },
+    { observed_at: '2026-04-15T08:00:00Z', data: { front_type: 'cold_front', temp_min: '+5 °C', temp_max: '+12 °C' } },
+    { observed_at: '2026-04-16T08:00:00Z', data: { front_type: 'stationary_front', temp_min: '+6 °C', temp_max: '+13 °C' } },
+    { observed_at: '2026-04-17T06:00:00Z', data: { front_type: 'cold_front', temp_min: '+4 °C', temp_max: '+11 °C' } },
+    { observed_at: '2026-04-17T16:00:00Z', data: { front_type: 'warm_front', temp_min: '+8 °C', temp_max: '+15 °C' } },
   ]},
   { target_date: '2026-04-18', forecasts: [
-    { observed_at: '2026-04-17T08:00:00Z', data: { front_type: 'warm_front', temp_min: '9°C', temp_max: '17°C' } },
+    { observed_at: '2026-04-17T08:00:00Z', data: { front_type: 'warm_front', temp_min: '+9 °C', temp_max: '+17 °C' } },
   ]},
   { target_date: '2026-04-19', forecasts: [
-    { observed_at: '2026-04-17T08:00:00Z', data: { front_type: 'warm_front', temp_min: '11°C', temp_max: '19°C' } },
-    { observed_at: '2026-04-18T08:00:00Z', data: { front_type: 'no_front', temp_min: '13°C', temp_max: '21°C' } },
+    { observed_at: '2026-04-17T08:00:00Z', data: { front_type: 'warm_front', temp_min: '+11 °C', temp_max: '+19 °C' } },
+    { observed_at: '2026-04-18T08:00:00Z', data: { front_type: 'no_front', temp_min: '+13 °C', temp_max: '+21 °C' } },
   ]},
   { target_date: '2026-04-20', forecasts: [
-    { observed_at: '2026-04-18T08:00:00Z', data: { front_type: 'no_front', temp_min: '14°C', temp_max: '22°C' } },
-    { observed_at: '2026-04-19T08:00:00Z', data: { front_type: 'double_front', temp_min: '12°C', temp_max: '20°C' } },
-    { observed_at: '2026-04-20T06:00:00Z', data: { front_type: 'cold_front', temp_min: '9°C', temp_max: '17°C' } },
-    { observed_at: '2026-04-20T18:00:00Z', data: { front_type: 'cold_front', temp_min: '7°C', temp_max: '15°C' } },
+    { observed_at: '2026-04-18T08:00:00Z', data: { front_type: 'no_front', temp_min: '+14 °C', temp_max: '+22 °C' } },
+    { observed_at: '2026-04-19T08:00:00Z', data: { front_type: 'double_front', temp_min: '+12 °C', temp_max: '+20 °C' } },
+    { observed_at: '2026-04-20T06:00:00Z', data: { front_type: 'cold_front', temp_min: '+9 °C', temp_max: '+17 °C' } },
+    { observed_at: '2026-04-20T18:00:00Z', data: { front_type: 'cold_front', temp_min: '+7 °C', temp_max: '+15 °C' } },
   ]},
-  // Example: front type stable (Melegfront throughout revisions), only temps revised — but card shows Hidegfront as the final latest update
   { target_date: '2026-04-21', forecasts: [
-    { observed_at: '2026-04-18T08:00:00Z', data: { front_type: 'warm_front', temp_min: '12°C', temp_max: '21°C' } },
-    { observed_at: '2026-04-19T08:00:00Z', data: { front_type: 'warm_front', temp_min: '11°C', temp_max: '19°C' } },
-    { observed_at: '2026-04-20T08:00:00Z', data: { front_type: 'warm_front', temp_min: '13°C', temp_max: '22°C' } },
-    { observed_at: '2026-04-21T06:00:00Z', data: { front_type: 'cold_front', temp_min: '6°C', temp_max: '13°C' } },
+    { observed_at: '2026-04-18T08:00:00Z', data: { front_type: 'warm_front', temp_min: '+12 °C', temp_max: '+21 °C' } },
+    { observed_at: '2026-04-19T08:00:00Z', data: { front_type: 'warm_front', temp_min: '+11 °C', temp_max: '+19 °C' } },
+    { observed_at: '2026-04-20T08:00:00Z', data: { front_type: 'warm_front', temp_min: '+13 °C', temp_max: '+22 °C' } },
+    { observed_at: '2026-04-21T06:00:00Z', data: { front_type: 'cold_front', temp_min: '+6 °C', temp_max: '+13 °C' } },
   ]},
 ]
 
@@ -376,10 +375,12 @@ const days = computed(() => history.value.map(day => {
   const bg = cardBackground(day)
   const hasOnDayChanges = day.forecasts.length >= 2
   const onDayList = day.forecasts
-  const entriesWithChanges = onDayList.map((entry, i) => ({
-    ...entry,
-    changes: i > 0 ? getChanges(onDayList[i - 1], entry) : [] as FieldChange[],
-  }))
+  const entriesWithChanges = onDayList
+    .map((entry, i) => ({
+      ...entry,
+      changes: i > 0 ? getChanges(onDayList[i - 1], entry) : [] as FieldChange[],
+    }))
+    .filter(e => e.changes.length > 0)
   const today = new Date()
   const tomorrow = new Date(today)
   tomorrow.setDate(today.getDate() + 1)
@@ -429,14 +430,13 @@ function onDayEntries(day: DayHistory) {
               <div class="timeline-row">
                 <div class="dot" :class="frontStyle(entry.data.front_type).dot"></div>
                 <span class="tl-time">{{ fmt(entry.observed_at) }}</span>
-                <span class="tl-front">{{ frontStyle(entry.data.front_type).short }}</span>
-              </div>
-              <div v-if="entry.changes.length > 0" class="tl-changes">
-                <span v-for="change in entry.changes" :key="change.field" class="tl-change">
-                  <span class="change-label">{{ change.label }}</span>
-                  <span class="change-from">{{ change.from }}</span>
-                  <span class="change-arrow">→</span>
-                  <span class="change-to">{{ change.to }}</span>
+                <span v-if="entry.changes.length > 0" class="tl-inline-changes">
+                  <span v-for="(change, ci) in entry.changes" :key="change.field">
+                    <span v-if="ci > 0" class="tl-sep"> · </span>
+                    <span class="tl-from">{{ change.from }}</span>
+                    <span class="tl-arrow"> → </span>
+                    <span class="tl-to">{{ change.to }}</span>
+                  </span>
                 </span>
               </div>
               <div v-if="i < day.entriesWithChanges.length - 1" class="timeline-connector">
@@ -707,48 +707,24 @@ function onDayEntries(day: DayHistory) {
   min-width: 90px;
 }
 
-.tl-front {
+.tl-inline-changes {
   font-size: 12px;
-  font-weight: 500;
-  color: #44403c;
 }
 
-.tl-changes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  padding: 3px 0 2px 23px;
-}
-
-.tl-change {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 5px;
-  padding: 2px 6px;
-  font-size: 11px;
-}
-
-.change-label {
-  color: #aaa;
-  font-size: 10px;
-  margin-right: 1px;
-}
-
-.change-from {
+.tl-from {
   color: #bbb;
-  text-decoration: line-through;
-  text-decoration-color: #ccc;
 }
 
-.change-arrow {
+.tl-arrow {
   color: #ccc;
-  font-size: 10px;
 }
 
-.change-to {
+.tl-to {
   color: #44403c;
-  font-weight: 600;
+  font-weight: 500;
+}
+
+.tl-sep {
+  color: #ddd;
 }
 </style>
