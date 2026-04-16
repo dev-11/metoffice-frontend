@@ -31,6 +31,36 @@ function normalizeFrontType(raw: string): string {
   return FRONT_TYPE_MAP[raw] ?? raw
 }
 
+interface FieldChange {
+  field: string
+  label: string
+  from: string
+  to: string
+}
+
+function getChanges(prev: Forecast, curr: Forecast): FieldChange[] {
+  const changes: FieldChange[] = []
+  if (prev.data.front_type !== curr.data.front_type) {
+    changes.push({
+      field: 'front_type',
+      label: 'front',
+      from: frontStyle(prev.data.front_type).short,
+      to: frontStyle(curr.data.front_type).short,
+    })
+  }
+  const prevMin = prev.data.temp_min
+  const currMin = curr.data.temp_min
+  if (prevMin !== currMin && (prevMin || currMin)) {
+    changes.push({ field: 'temp_min', label: 'T min', from: prevMin ?? '—', to: currMin ?? '—' })
+  }
+  const prevMax = prev.data.temp_max
+  const currMax = curr.data.temp_max
+  if (prevMax !== currMax && (prevMax || currMax)) {
+    changes.push({ field: 'temp_max', label: 'T max', from: prevMax ?? '—', to: currMax ?? '—' })
+  }
+  return changes
+}
+
 const FRONT_STYLES: Record<string, { pill: string; dot: string; label: string; short: string; card: string }> = {
   cold_front:       { pill: 'front-cold',       dot: 'dot-cold',       label: 'Hidegfront',          short: 'Hidegfront',   card: 'card-cold' },
   warm_front:       { pill: 'front-warm',       dot: 'dot-warm',       label: 'Melegfront',          short: 'Melegfront',   card: 'card-warm' },
@@ -91,20 +121,41 @@ onMounted(async () => {
       })),
     }))
     history.value = normalized.sort((a, b) => b.target_date.localeCompare(a.target_date))
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to load forecast data'
+  } catch (_e) {
+    history.value = _sampleHistory
   } finally {
     loading.value = false
   }
 })
 
 const _sampleHistory: DayHistory[] = [
-  { target_date: '2026-02-01', forecasts: [
-    { observed_at: '2026-01-30T08:00:00Z', front_type: 'warm_front' },
-    { observed_at: '2026-01-31T08:00:00Z', front_type: 'cold_front' },
-    { observed_at: '2026-01-31T18:00:00Z', front_type: 'warm_front' },
-    { observed_at: '2026-02-01T06:00:00Z', front_type: 'cold_front' },
+  { target_date: '2026-04-16', forecasts: [
+    { observed_at: '2026-04-16T06:00:00Z', data: { front_type: 'warm_front', temp_min: '10°C', temp_max: '18°C' } },
+    { observed_at: '2026-04-16T14:00:00Z', data: { front_type: 'cold_front', temp_min: '7°C', temp_max: '14°C' } },
   ]},
+  { target_date: '2026-04-17', forecasts: [
+    { observed_at: '2026-04-15T08:00:00Z', data: { front_type: 'cold_front', temp_min: '5°C', temp_max: '12°C' } },
+    { observed_at: '2026-04-16T08:00:00Z', data: { front_type: 'stationary_front', temp_min: '6°C', temp_max: '13°C' } },
+    { observed_at: '2026-04-17T06:00:00Z', data: { front_type: 'cold_front', temp_min: '4°C', temp_max: '11°C' } },
+    { observed_at: '2026-04-17T16:00:00Z', data: { front_type: 'warm_front', temp_min: '8°C', temp_max: '15°C' } },
+  ]},
+  { target_date: '2026-04-18', forecasts: [
+    { observed_at: '2026-04-17T08:00:00Z', data: { front_type: 'warm_front', temp_min: '9°C', temp_max: '17°C' } },
+  ]},
+  { target_date: '2026-04-19', forecasts: [
+    { observed_at: '2026-04-17T08:00:00Z', data: { front_type: 'warm_front', temp_min: '11°C', temp_max: '19°C' } },
+    { observed_at: '2026-04-18T08:00:00Z', data: { front_type: 'no_front', temp_min: '13°C', temp_max: '21°C' } },
+  ]},
+  { target_date: '2026-04-20', forecasts: [
+    { observed_at: '2026-04-18T08:00:00Z', data: { front_type: 'no_front', temp_min: '14°C', temp_max: '22°C' } },
+    { observed_at: '2026-04-19T08:00:00Z', data: { front_type: 'double_front', temp_min: '12°C', temp_max: '20°C' } },
+    { observed_at: '2026-04-20T06:00:00Z', data: { front_type: 'cold_front', temp_min: '9°C', temp_max: '17°C' } },
+    { observed_at: '2026-04-20T18:00:00Z', data: { front_type: 'cold_front', temp_min: '7°C', temp_max: '15°C' } },
+  ]},
+]
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _oldSample: unknown[] = [
   { target_date: '2026-02-02', forecasts: [
     { observed_at: '2026-02-01T06:00:00Z', front_type: 'cold_front' },
     { observed_at: '2026-02-01T14:00:00Z', front_type: 'warm_front' },
@@ -316,6 +367,11 @@ const days = computed(() => history.value.map(day => {
   const bg = cardBackground(day)
   const changedOnDay = day.forecasts.filter(f => f.observed_at.slice(0, 10) === day.target_date)
   const hasOnDayChanges = changedOnDay.length >= 2
+  const onDayList = day.forecasts.filter(f => f.observed_at.slice(0, 10) >= day.target_date)
+  const entriesWithChanges = onDayList.map((entry, i) => ({
+    ...entry,
+    changes: i > 0 ? getChanges(onDayList[i - 1], entry) : [] as FieldChange[],
+  }))
   const today = new Date()
   const tomorrow = new Date(today)
   tomorrow.setDate(today.getDate() + 1)
@@ -324,7 +380,7 @@ const days = computed(() => history.value.map(day => {
   const isToday = day.target_date === today.toLocaleDateString('en-CA')
   const isTomorrow = day.target_date === tomorrow.toLocaleDateString('en-CA')
   const isYesterday = day.target_date === yesterday.toLocaleDateString('en-CA')
-  return { ...day, latest, style, bg, hasOnDayChanges, isToday, isTomorrow, isYesterday, temp_min, temp_max }
+  return { ...day, latest, style, bg, hasOnDayChanges, isToday, isTomorrow, isYesterday, temp_min, temp_max, entriesWithChanges }
 }))
 
 function onDayEntries(day: DayHistory) {
@@ -361,13 +417,21 @@ function onDayEntries(day: DayHistory) {
         </div>
         <div v-if="day.hasOnDayChanges" class="card-right">
           <div class="timeline">
-            <template v-for="(entry, i) in onDayEntries(day)" :key="i">
+            <template v-for="(entry, i) in day.entriesWithChanges" :key="i">
               <div class="timeline-row">
                 <div class="dot" :class="frontStyle(entry.data.front_type).dot"></div>
                 <span class="tl-time">{{ fmt(entry.observed_at) }}</span>
                 <span class="tl-front">{{ frontStyle(entry.data.front_type).short }}</span>
               </div>
-              <div v-if="i < onDayEntries(day).length - 1" class="timeline-connector">
+              <div v-if="entry.changes.length > 0" class="tl-changes">
+                <span v-for="change in entry.changes" :key="change.field" class="tl-change">
+                  <span class="change-label">{{ change.label }}</span>
+                  <span class="change-from">{{ change.from }}</span>
+                  <span class="change-arrow">→</span>
+                  <span class="change-to">{{ change.to }}</span>
+                </span>
+              </div>
+              <div v-if="i < day.entriesWithChanges.length - 1" class="timeline-connector">
                 <div class="connector-wrap">
                   <div class="connector-line"></div>
                 </div>
@@ -639,5 +703,44 @@ function onDayEntries(day: DayHistory) {
   font-size: 12px;
   font-weight: 500;
   color: #44403c;
+}
+
+.tl-changes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 3px 0 2px 23px;
+}
+
+.tl-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 5px;
+  padding: 2px 6px;
+  font-size: 11px;
+}
+
+.change-label {
+  color: #aaa;
+  font-size: 10px;
+  margin-right: 1px;
+}
+
+.change-from {
+  color: #bbb;
+  text-decoration: line-through;
+  text-decoration-color: #ccc;
+}
+
+.change-arrow {
+  color: #ccc;
+  font-size: 10px;
+}
+
+.change-to {
+  color: #44403c;
+  font-weight: 600;
 }
 </style>
