@@ -61,6 +61,14 @@ function getChanges(prev: Forecast, curr: Forecast): FieldChange[] {
   return changes
 }
 
+const FRONT_COLORS: Record<string, string> = {
+  cold_front:       '#e6f1fb',
+  warm_front:       '#fef2f2',
+  no_front:         '#f1efe8',
+  stationary_front: '#fff7ed',
+  double_front:     '#ede9fe',
+}
+
 const FRONT_STYLES: Record<string, { pill: string; dot: string; label: string; short: string; card: string }> = {
   cold_front:       { pill: 'front-cold',       dot: 'dot-cold',       label: 'Hidegfront',          short: 'Hidegfront',   card: 'card-cold' },
   warm_front:       { pill: 'front-warm',       dot: 'dot-warm',       label: 'Melegfront',          short: 'Melegfront',   card: 'card-warm' },
@@ -69,12 +77,14 @@ const FRONT_STYLES: Record<string, { pill: string; dot: string; label: string; s
   double_front:     { pill: 'front-double',     dot: 'dot-double',     label: 'Kettős front',        short: 'Kettős front', card: 'card-double' },
 }
 
-const FRONT_COLORS: Record<string, string> = {
-  cold_front:       '#e6f1fb',
-  warm_front:       '#fef2f2',
-  no_front:         '#f1efe8',
-  stationary_front: '#fff7ed',
-  double_front:     '#ede9fe',
+
+function cardBackground(day: DayHistory) {
+  const sameDayForecasts = day.forecasts.filter(f => f.observed_at.slice(0, 10) === day.target_date)
+  if (sameDayForecasts.length < 2) return null
+  const uniqueTypes = [...new Set(sameDayForecasts.map(f => f.data.front_type))]
+  if (uniqueTypes.length < 2) return null
+  const colors = uniqueTypes.map(t => FRONT_COLORS[t] || '#f1efe8')
+  return `linear-gradient(to right, ${colors[0]}, ${colors[colors.length - 1]})`
 }
 
 function frontStyle(ft: string) {
@@ -93,14 +103,6 @@ function fmtShortDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-function cardBackground(day: DayHistory) {
-  const sameDayForecasts = day.forecasts.filter(f => f.observed_at.slice(0, 10) === day.target_date)
-  if (sameDayForecasts.length < 2) return null
-  const uniqueTypes = [...new Set(sameDayForecasts.map(f => f.data.front_type))]
-  if (uniqueTypes.length < 2) return null
-  const colors = uniqueTypes.map(t => FRONT_COLORS[t] || '#f1efe8')
-  return `linear-gradient(to right, ${colors[0]}, ${colors[colors.length - 1]})`
-}
 
 const history = ref<DayHistory[]>([])
 const loading = ref(true)
@@ -151,6 +153,13 @@ const _sampleHistory: DayHistory[] = [
     { observed_at: '2026-04-19T08:00:00Z', data: { front_type: 'double_front', temp_min: '12°C', temp_max: '20°C' } },
     { observed_at: '2026-04-20T06:00:00Z', data: { front_type: 'cold_front', temp_min: '9°C', temp_max: '17°C' } },
     { observed_at: '2026-04-20T18:00:00Z', data: { front_type: 'cold_front', temp_min: '7°C', temp_max: '15°C' } },
+  ]},
+  // Example: front type stable (Melegfront throughout revisions), only temps revised — but card shows Hidegfront as the final latest update
+  { target_date: '2026-04-21', forecasts: [
+    { observed_at: '2026-04-18T08:00:00Z', data: { front_type: 'warm_front', temp_min: '12°C', temp_max: '21°C' } },
+    { observed_at: '2026-04-19T08:00:00Z', data: { front_type: 'warm_front', temp_min: '11°C', temp_max: '19°C' } },
+    { observed_at: '2026-04-20T08:00:00Z', data: { front_type: 'warm_front', temp_min: '13°C', temp_max: '22°C' } },
+    { observed_at: '2026-04-21T06:00:00Z', data: { front_type: 'cold_front', temp_min: '6°C', temp_max: '13°C' } },
   ]},
 ]
 
@@ -365,9 +374,8 @@ const days = computed(() => history.value.map(day => {
   const temp_min = latestWithTemp?.data.temp_min
   const temp_max = latestWithTemp?.data.temp_max
   const bg = cardBackground(day)
-  const changedOnDay = day.forecasts.filter(f => f.observed_at.slice(0, 10) === day.target_date)
-  const hasOnDayChanges = changedOnDay.length >= 2
-  const onDayList = day.forecasts.filter(f => f.observed_at.slice(0, 10) >= day.target_date)
+  const hasOnDayChanges = day.forecasts.length >= 2
+  const onDayList = day.forecasts
   const entriesWithChanges = onDayList.map((entry, i) => ({
     ...entry,
     changes: i > 0 ? getChanges(onDayList[i - 1], entry) : [] as FieldChange[],
@@ -640,12 +648,12 @@ function onDayEntries(day: DayHistory) {
   padding-left: 16px;
 }
 
+.front-mixed      { background: rgba(255, 255, 255, 0.55); color: #44403c; }
 .front-cold       { background: #e6f1fb; color: #0c447c; }
 .front-warm       { background: #fef2f2; color: #991b1b; }
 .front-no         { background: #f1efe8; color: #444441; }
 .front-stationary { background: #fff7ed; color: #9a3412; }
 .front-double     { background: #ede9fe; color: #5b21b6; }
-.front-mixed      { background: rgba(255, 255, 255, 0.55); color: #44403c; }
 
 .timeline {
   padding-top: 0;
