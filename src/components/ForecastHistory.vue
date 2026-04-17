@@ -107,6 +107,7 @@ function fmtShortDate(dateStr: string) {
 const history = ref<DayHistory[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
+const expandedDays = ref<Record<string, boolean>>({})
 
 onMounted(async () => {
   try {
@@ -395,6 +396,10 @@ const days = computed(() => history.value.map(day => {
 function onDayEntries(day: DayHistory) {
   return day.forecasts.filter(f => f.observed_at.slice(0, 10) >= day.target_date)
 }
+
+function toggleDay(targetDate: string) {
+  expandedDays.value[targetDate] = !expandedDays.value[targetDate]
+}
 </script>
 
 <template>
@@ -405,11 +410,11 @@ function onDayEntries(day: DayHistory) {
       v-for="day in days"
       :key="day.target_date"
       class="day-card"
-      :class="[day.bg ? '' : day.style.card, { 'day-card--today': day.isToday, 'day-card--tomorrow': day.isTomorrow }]"
+      :class="[day.bg ? 'day-card--gradient' : day.style.card, { 'day-card--today': day.isToday, 'day-card--tomorrow': day.isTomorrow, 'day-card--has-history': day.hasOnDayChanges }]"
       :style="day.bg ? { background: day.bg } : {}"
     >
       <div class="card-body" :class="{ 'no-history': !day.hasOnDayChanges }">
-        <div class="card-left">
+        <div class="card-left" :class="{ 'card-left--expandable': day.hasOnDayChanges, 'card-left--open': expandedDays[day.target_date] }" @click="day.hasOnDayChanges && toggleDay(day.target_date)">
           <div class="card-date-block">
             <div class="card-title-row">
               <span v-if="day.isYesterday" class="yesterday-badge">Tegnap</span>
@@ -424,7 +429,7 @@ function onDayEntries(day: DayHistory) {
             <span class="weather-temp">{{ day.temp_min }} / {{ day.temp_max }}</span>
           </div>
         </div>
-        <div v-if="day.hasOnDayChanges" class="card-right">
+        <div v-if="day.hasOnDayChanges" class="card-right" :class="{ 'card-right--collapsed': !expandedDays[day.target_date] }">
           <div class="timeline">
             <template v-for="(entry, i) in day.entriesWithChanges" :key="i">
               <div class="timeline-row">
@@ -480,6 +485,9 @@ function onDayEntries(day: DayHistory) {
 .day-card--today {
   border: 2px solid #44403c;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+.day-card--gradient.day-card--today {
+  border: 2px solid rgba(0, 0, 0, 0.2);
 }
 
 .day-card--tomorrow {
@@ -552,6 +560,16 @@ function onDayEntries(day: DayHistory) {
     border-top: 0.5px solid rgba(0, 0, 0, 0.08);
     padding-left: 0;
     padding-top: 10px;
+  }
+  .card-right--collapsed {
+    display: none;
+  }
+  .day-card--has-history {
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.2);
+  }
+  .card-left--expandable {
+    cursor: pointer;
+    user-select: none;
   }
   .forecast-history {
     padding: 0;
