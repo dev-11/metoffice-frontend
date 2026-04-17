@@ -432,7 +432,7 @@ function toggleDay(targetDate: string) {
         <div v-if="day.hasOnDayChanges" class="card-right" :class="{ 'card-right--collapsed': !expandedDays[day.target_date] }">
           <div class="timeline">
             <template v-for="(entry, i) in day.entriesWithChanges" :key="i">
-              <div class="timeline-row">
+              <div class="timeline-row" :class="{ 'timeline-row--connected': i < day.entriesWithChanges.length - 1 }">
                 <div class="dot" :class="frontStyle(entry.data.front_type).dot"></div>
                 <span class="tl-time">{{ fmt(entry.observed_at) }}</span>
                 <span v-if="entry.changes.length > 0" class="tl-inline-changes">
@@ -443,11 +443,6 @@ function toggleDay(targetDate: string) {
                     <span class="tl-to">{{ change.to }}</span>
                   </span>
                 </span>
-              </div>
-              <div v-if="i < day.entriesWithChanges.length - 1" class="timeline-connector">
-                <div class="connector-wrap">
-                  <div class="connector-line"></div>
-                </div>
               </div>
             </template>
           </div>
@@ -679,29 +674,19 @@ function toggleDay(targetDate: string) {
 
 .timeline-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
-  padding: 2px 0;
+  padding: 4px 0;
+  position: relative;
 }
 
-.timeline-connector {
-  display: flex;
-  align-items: stretch;
-  gap: 10px;
-  height: 6px;
-}
-
-.connector-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 13px;
-  flex-shrink: 0;
-}
-
-.connector-line {
+.timeline-row--connected::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: calc(4px + 2px + 13px + 4px);
+  bottom: -2px;
   width: 1px;
-  height: 100%;
   background: rgba(0, 0, 0, 0.15);
 }
 
@@ -710,6 +695,8 @@ function toggleDay(targetDate: string) {
   height: 13px;
   border-radius: 50%;
   flex-shrink: 0;
+  margin-top: 2px;
+  position: relative;
   border: 1.5px solid;
 }
 
@@ -723,6 +710,7 @@ function toggleDay(targetDate: string) {
   font-size: 12px;
   color: #888;
   min-width: 90px;
+  padding-top: 1px;
 }
 
 .tl-inline-changes {
@@ -730,7 +718,7 @@ function toggleDay(targetDate: string) {
 }
 
 .tl-from {
-  color: #bbb;
+  color: #888;
 }
 
 .tl-arrow {
