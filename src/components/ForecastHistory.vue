@@ -518,7 +518,7 @@ function toggleDay(targetDate: string) {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .card-body.no-history {
