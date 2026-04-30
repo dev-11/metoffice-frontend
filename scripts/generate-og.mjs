@@ -15,6 +15,16 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const OUT_PATH = resolve(__dirname, '../public/og-image.png')
 
 const W = 1200, H = 630
+const col1x = 80, col2x = 640
+const row1y = 370, row2y = 470
+const pw = 480, ph = 74
+
+const pill = (x, y, fill, stroke, textFill, label) => `
+  <rect x="${x}" y="${y}" width="${pw}" height="${ph}" rx="37"
+    fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>
+  <text x="${x + pw / 2}" y="${y + 47}"
+    font-family="system-ui,-apple-system,sans-serif" font-size="30" font-weight="600"
+    fill="${textFill}" text-anchor="middle">${label}</text>`
 
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">
   <defs>
@@ -26,40 +36,35 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">
   </defs>
 
   <rect width="${W}" height="${H}" fill="url(#bg)"/>
-
   <pattern id="dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
     <circle cx="20" cy="20" r="1.5" fill="rgba(0,0,0,0.06)"/>
   </pattern>
   <rect width="${W}" height="${H}" fill="url(#dots)"/>
-
   <circle cx="980" cy="180" r="320" fill="rgba(255,255,255,0.35)"/>
   <circle cx="980" cy="180" r="220" fill="rgba(255,255,255,0.35)"/>
   <circle cx="980" cy="180" r="120" fill="rgba(255,255,255,0.4)"/>
 
-  <text x="80" y="200"
+  <text x="80" y="190"
     font-family="system-ui, -apple-system, sans-serif"
-    font-size="72" font-weight="700" fill="#44403c"
-    letter-spacing="-1"
+    font-size="72" font-weight="700" fill="#44403c" letter-spacing="-1"
   >Orvosmeteorológia</text>
 
-  <rect x="80" y="228" width="120" height="4" rx="2" fill="#44403c" opacity="0.2"/>
+  <rect x="80" y="234" width="${W - 160}" height="1.5" rx="1" fill="#44403c" opacity="0.15"/>
 
-  <text x="80" y="310"
+  <text x="80" y="290"
     font-family="system-ui, -apple-system, sans-serif"
     font-size="36" font-weight="400" fill="#78716c"
   >Napi frontjelzés és előrejelzés-előzmények</text>
 
-  <rect x="80"  y="390" width="180" height="52" rx="26" fill="#e6f1fb"/>
-  <text x="170" y="424" font-family="system-ui,-apple-system,sans-serif" font-size="22" font-weight="600" fill="#0c447c" text-anchor="middle">Hidegfront</text>
+  ${pill(col1x, row1y, '#e6f1fb', '#b5d4f4', '#0c447c', 'Hidegfront')}
+  ${pill(col2x, row1y, '#fef2f2', '#fca5a5', '#991b1b', 'Melegfront')}
+  ${pill(col1x, row2y, '#f1efe8', '#d3d1c7', '#444441', 'Nincs front')}
+  ${pill(col2x, row2y, '#ede9fe', '#c4b5fd', '#5b21b6', 'Kettős front')}
 
-  <rect x="278" y="390" width="180" height="52" rx="26" fill="#fef2f2"/>
-  <text x="368" y="424" font-family="system-ui,-apple-system,sans-serif" font-size="22" font-weight="600" fill="#991b1b" text-anchor="middle">Melegfront</text>
-
-  <rect x="476" y="390" width="160" height="52" rx="26" fill="#f1efe8"/>
-  <text x="556" y="424" font-family="system-ui,-apple-system,sans-serif" font-size="22" font-weight="600" fill="#444441" text-anchor="middle">Nincs front</text>
-
-  <rect x="654" y="390" width="160" height="52" rx="26" fill="#ede9fe"/>
-  <text x="734" y="424" font-family="system-ui,-apple-system,sans-serif" font-size="22" font-weight="600" fill="#5b21b6" text-anchor="middle">Kettős front</text>
+  <text x="80" y="${H - 32}"
+    font-family="system-ui, -apple-system, sans-serif"
+    font-size="24" font-weight="400" fill="#44403c" opacity="0.55" letter-spacing="0.5"
+  >idojaras.kutor.hu</text>
 </svg>`
 
 mkdirSync(resolve(__dirname, '../public'), { recursive: true })
