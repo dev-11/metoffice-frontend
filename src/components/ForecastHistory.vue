@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUpdated, onUnmounted } from 'vue'
 import axios from 'axios'
 
 interface ForecastData {
@@ -173,21 +173,21 @@ const _sampleHistory: DayHistory[] = [
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _oldSample: unknown[] = [
   { target_date: '2026-02-02', forecasts: [
-    { observed_at: '2026-02-01T06:00:00Z', front_type: 'cold_front' },
-    { observed_at: '2026-02-01T14:00:00Z', front_type: 'warm_front' },
+    { observed_at: '2026-02-01T06:00:00Z', front_type: 'cold_front', temp_min: '+1 °C', temp_max: '+6 °C' },
+    { observed_at: '2026-02-01T14:00:00Z', front_type: 'warm_front', temp_min: '+1 °C', temp_max: '+6 °C' },
   ]},
   { target_date: '2026-02-03', forecasts: [
-    { observed_at: '2026-02-01T08:00:00Z', front_type: 'warm_front' },
-    { observed_at: '2026-02-02T08:00:00Z', front_type: 'cold_front' },
-    { observed_at: '2026-02-02T20:00:00Z', front_type: 'warm_front' },
-    { observed_at: '2026-02-03T08:00:00Z', front_type: 'cold_front' },
+    { observed_at: '2026-02-01T08:00:00Z', front_type: 'warm_front', temp_min: '+2 °C', temp_max: '+8 °C' },
+    { observed_at: '2026-02-02T08:00:00Z', front_type: 'cold_front', temp_min: '+2 °C', temp_max: '+8 °C' },
+    { observed_at: '2026-02-02T20:00:00Z', front_type: 'warm_front', temp_min: '+2 °C', temp_max: '+8 °C' },
+    { observed_at: '2026-02-03T08:00:00Z', front_type: 'cold_front', temp_min: '+2 °C', temp_max: '+8 °C' },
   ]},
   { target_date: '2026-02-04', forecasts: [
-    { observed_at: '2026-02-03T08:00:00Z', front_type: 'cold_front' },
-    { observed_at: '2026-02-04T06:00:00Z', front_type: 'warm_front' },
+    { observed_at: '2026-02-03T08:00:00Z', front_type: 'cold_front', temp_min: '0 °C', temp_max: '+5 °C' },
+    { observed_at: '2026-02-04T06:00:00Z', front_type: 'warm_front', temp_min: '0 °C', temp_max: '+5 °C' },
   ]},
-  { target_date: '2026-02-05', forecasts: [{ observed_at: '2026-02-04T08:00:00Z', front_type: 'stationary_front' }] },
-  { target_date: '2026-02-06', forecasts: [{ observed_at: '2026-02-05T08:00:00Z', front_type: 'stationary_front' }] },
+  { target_date: '2026-02-05', forecasts: [{ observed_at: '2026-02-04T08:00:00Z', front_type: 'stationary_front', temp_min: '+3 °C', temp_max: '+9 °C' }] },
+  { target_date: '2026-02-06', forecasts: [{ observed_at: '2026-02-05T08:00:00Z', front_type: 'stationary_front', temp_min: '+4 °C', temp_max: '+11 °C' }] },
   { target_date: '2026-02-07', forecasts: [
     { observed_at: '2026-02-05T08:00:00Z', front_type: 'stationary_front' },
     { observed_at: '2026-02-06T08:00:00Z', front_type: 'cold_front' },
@@ -436,6 +436,26 @@ function closeCalPopover() {
   selectedCalDate.value = null
 }
 
+// Hide cal temp labels that are wider than their cell (or show them if they fit).
+// Called after Vue updates (data load, HMR) and on window resize.
+function checkTempWidths() {
+  requestAnimationFrame(() => {
+    document.querySelectorAll<HTMLElement>('.cal-temp-area').forEach(area => {
+      area.style.display = ''            // reset first (viewport may have grown)
+      if (area.clientWidth === 0) return // CSS breakpoint is hiding it
+      const span = area.querySelector<HTMLElement>('.cal-temp')
+      if (!span) return
+      if (span.scrollWidth > area.clientWidth) {
+        area.style.display = 'none'
+      }
+    })
+  })
+}
+
+onUpdated(() => { checkTempWidths() })
+onMounted(() => { window.addEventListener('resize', checkTempWidths) })
+onUnmounted(() => { window.removeEventListener('resize', checkTempWidths) })
+
 // Split into recent (≤14 days) and old (>14 days)
 const recentDays = computed(() => days.value.filter(d => !d.isOld))
 const oldDays = computed(() => days.value.filter(d => d.isOld))
@@ -549,6 +569,9 @@ const oldCalendarMonths = computed(() => {
               @click.stop="openCalPopover($event, cell.target_date)"
             >
               <span class="cal-day-num">{{ Number(cell.target_date.slice(8)) }}</span>
+              <div v-if="cell.temp_min && cell.temp_max" class="cal-temp-area">
+                <span class="cal-temp">{{ cell.temp_min }} / {{ cell.temp_max }}</span>
+              </div>
               <span v-if="cell.entriesWithChanges.length" class="cal-change-dot"></span>
             </div>
             <div v-else class="cal-cell cal-cell--empty"></div>
@@ -622,6 +645,34 @@ const oldCalendarMonths = computed(() => {
   white-space: nowrap;
 }
 
+/* temp hidden on mobile */
+.cal-temp-area { display: none; }
+
+@media (min-width: 500px) {
+  .cal-day-num { font-size: 20px !important; }
+  .cal-weekday-header { font-size: 13px !important; padding-bottom: 6px !important; }
+  .cal-month-label { font-size: 15px !important; margin-bottom: 0.75rem !important; }
+  .cal-change-dot { width: 6px !important; height: 6px !important; bottom: 8px !important; right: 8px !important; }
+  .cal-cell { border-radius: 8px !important; }
+  .cal-grid { gap: 5px !important; }
+  .cal-temp-area {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    overflow: hidden;
+    min-height: 0;
+  }
+  .cal-temp {
+    font-size: 13px;
+    font-weight: 400;
+    color: #999;
+    line-height: 1;
+    white-space: nowrap;
+  }
+}
+
 /* ── Calendar section ── */
 .cal-section {
   margin-top: 1.25rem;
@@ -667,11 +718,13 @@ const oldCalendarMonths = computed(() => {
   border: 0.5px solid rgba(0,0,0,0.10);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 5px 6px;
   position: relative;
   cursor: default;
   transition: opacity 0.15s;
+  overflow: hidden;
 }
 
 .cal-cell:hover {
@@ -692,11 +745,13 @@ const oldCalendarMonths = computed(() => {
 }
 
 .cal-change-dot {
-  width: 4px;
-  height: 4px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: rgba(0,0,0,0.25);
-  margin-top: 2px;
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
 }
 
 .cal-cell--selected {
