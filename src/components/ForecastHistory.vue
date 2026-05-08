@@ -139,34 +139,34 @@ onMounted(async () => {
 })
 
 const _sampleHistory: DayHistory[] = [
-  { target_date: '2026-04-16', forecasts: [
-    { observed_at: '2026-04-16T06:00:00Z', data: { front_type: 'warm_front', temp_min: '+10 °C', temp_max: '+18 °C' } },
-    { observed_at: '2026-04-16T14:00:00Z', data: { front_type: 'cold_front', temp_min: '+7 °C', temp_max: '+14 °C' } },
+  { target_date: '2026-05-02', forecasts: [
+    { observed_at: '2026-05-02T06:00:00Z', data: { front_type: 'warm_front', temp_min: '+10 °C', temp_max: '+18 °C' } },
+    { observed_at: '2026-05-02T14:00:00Z', data: { front_type: 'cold_front', temp_min: '+7 °C', temp_max: '+14 °C' } },
   ]},
-  { target_date: '2026-04-17', forecasts: [
-    { observed_at: '2026-04-15T08:00:00Z', data: { front_type: 'cold_front', temp_min: '+5 °C', temp_max: '+12 °C' } },
-    { observed_at: '2026-04-16T08:00:00Z', data: { front_type: 'stationary_front', temp_min: '+6 °C', temp_max: '+13 °C' } },
-    { observed_at: '2026-04-17T06:00:00Z', data: { front_type: 'cold_front', temp_min: '+4 °C', temp_max: '+11 °C' } },
-    { observed_at: '2026-04-17T16:00:00Z', data: { front_type: 'warm_front', temp_min: '+8 °C', temp_max: '+15 °C' } },
+  { target_date: '2026-05-03', forecasts: [
+    { observed_at: '2026-05-01T08:00:00Z', data: { front_type: 'cold_front', temp_min: '+5 °C', temp_max: '+12 °C' } },
+    { observed_at: '2026-05-02T08:00:00Z', data: { front_type: 'stationary_front', temp_min: '+6 °C', temp_max: '+13 °C' } },
+    { observed_at: '2026-05-03T06:00:00Z', data: { front_type: 'cold_front', temp_min: '+4 °C', temp_max: '+11 °C' } },
+    { observed_at: '2026-05-03T16:00:00Z', data: { front_type: 'warm_front', temp_min: '+8 °C', temp_max: '+15 °C' } },
   ]},
-  { target_date: '2026-04-18', forecasts: [
-    { observed_at: '2026-04-17T08:00:00Z', data: { front_type: 'warm_front', temp_min: '+9 °C', temp_max: '+17 °C' } },
+  { target_date: '2026-05-04', forecasts: [
+    { observed_at: '2026-05-03T08:00:00Z', data: { front_type: 'warm_front', temp_min: '+9 °C', temp_max: '+17 °C' } },
   ]},
-  { target_date: '2026-04-19', forecasts: [
-    { observed_at: '2026-04-17T08:00:00Z', data: { front_type: 'warm_front', temp_min: '+11 °C', temp_max: '+19 °C' } },
-    { observed_at: '2026-04-18T08:00:00Z', data: { front_type: 'no_front', temp_min: '+13 °C', temp_max: '+21 °C' } },
+  { target_date: '2026-05-05', forecasts: [
+    { observed_at: '2026-05-03T08:00:00Z', data: { front_type: 'warm_front', temp_min: '+11 °C', temp_max: '+19 °C' } },
+    { observed_at: '2026-05-04T08:00:00Z', data: { front_type: 'no_front', temp_min: '+13 °C', temp_max: '+21 °C' } },
   ]},
-  { target_date: '2026-04-20', forecasts: [
-    { observed_at: '2026-04-18T08:00:00Z', data: { front_type: 'no_front', temp_min: '+14 °C', temp_max: '+22 °C' } },
-    { observed_at: '2026-04-19T08:00:00Z', data: { front_type: 'double_front', temp_min: '+12 °C', temp_max: '+20 °C' } },
-    { observed_at: '2026-04-20T06:00:00Z', data: { front_type: 'cold_front', temp_min: '+9 °C', temp_max: '+17 °C' } },
-    { observed_at: '2026-04-20T18:00:00Z', data: { front_type: 'cold_front', temp_min: '+7 °C', temp_max: '+15 °C' } },
+  { target_date: '2026-05-06', forecasts: [
+    { observed_at: '2026-05-04T08:00:00Z', data: { front_type: 'no_front', temp_min: '+14 °C', temp_max: '+22 °C' } },
+    { observed_at: '2026-05-05T08:00:00Z', data: { front_type: 'double_front', temp_min: '+12 °C', temp_max: '+20 °C' } },
+    { observed_at: '2026-05-06T06:00:00Z', data: { front_type: 'cold_front', temp_min: '+9 °C', temp_max: '+17 °C' } },
+    { observed_at: '2026-05-06T18:00:00Z', data: { front_type: 'cold_front', temp_min: '+7 °C', temp_max: '+15 °C' } },
   ]},
-  { target_date: '2026-04-21', forecasts: [
-    { observed_at: '2026-04-18T08:00:00Z', data: { front_type: 'warm_front', temp_min: '+12 °C', temp_max: '+21 °C' } },
-    { observed_at: '2026-04-19T08:00:00Z', data: { front_type: 'warm_front', temp_min: '+11 °C', temp_max: '+19 °C' } },
-    { observed_at: '2026-04-20T08:00:00Z', data: { front_type: 'warm_front', temp_min: '+13 °C', temp_max: '+22 °C' } },
-    { observed_at: '2026-04-21T06:00:00Z', data: { front_type: 'cold_front', temp_min: '+6 °C', temp_max: '+13 °C' } },
+  { target_date: '2026-05-07', forecasts: [
+    { observed_at: '2026-05-04T08:00:00Z', data: { front_type: 'warm_front', temp_min: '+12 °C', temp_max: '+21 °C' } },
+    { observed_at: '2026-05-05T08:00:00Z', data: { front_type: 'warm_front', temp_min: '+11 °C', temp_max: '+19 °C' } },
+    { observed_at: '2026-05-06T08:00:00Z', data: { front_type: 'warm_front', temp_min: '+13 °C', temp_max: '+22 °C' } },
+    { observed_at: '2026-05-07T06:00:00Z', data: { front_type: 'cold_front', temp_min: '+6 °C', temp_max: '+13 °C' } },
   ]},
 ]
 
@@ -394,14 +394,17 @@ const days = computed(() => history.value.map(day => {
   tomorrow.setDate(today.getDate() + 1)
   const yesterday = new Date(today)
   yesterday.setDate(today.getDate() - 1)
+  const dayBeforeYesterday = new Date(today)
+  dayBeforeYesterday.setDate(today.getDate() - 2)
   const isToday = day.target_date === today.toLocaleDateString('en-CA')
   const isTomorrow = day.target_date === tomorrow.toLocaleDateString('en-CA')
   const isYesterday = day.target_date === yesterday.toLocaleDateString('en-CA')
+  const isDayBeforeYesterday = day.target_date === dayBeforeYesterday.toLocaleDateString('en-CA')
   const newestDate = new Date(history.value[0]?.target_date ?? today)
   const cutoff = new Date(newestDate)
-  cutoff.setDate(newestDate.getDate() - 7)
+  cutoff.setDate(newestDate.getDate() - 4)
   const isOld = new Date(day.target_date) < cutoff
-  return { ...day, latest, style, bg, hasOnDayChanges, isToday, isTomorrow, isYesterday, isOld, temp_min, temp_max, entriesWithChanges }
+  return { ...day, latest, style, bg, hasOnDayChanges, isToday, isTomorrow, isYesterday, isDayBeforeYesterday, isOld, temp_min, temp_max, entriesWithChanges }
 }))
 
 function onDayEntries(day: DayHistory) {
@@ -456,44 +459,57 @@ onUpdated(() => { checkTempWidths() })
 onMounted(() => { window.addEventListener('resize', checkTempWidths) })
 onUnmounted(() => { window.removeEventListener('resize', checkTempWidths) })
 
-// Split into recent (≤14 days) and old (>14 days)
+// Split into recent (≤7 days) and old (>7 days)
 const recentDays = computed(() => days.value.filter(d => !d.isOld))
-const oldDays = computed(() => days.value.filter(d => d.isOld))
 
-// Group old days by "YYYY-MM" and build calendar grids
+// Today's date string and current ISO week (Mon–Sun)
+const todayStr = new Date().toLocaleDateString('en-CA')
+const currentWeekDates = computed(() => {
+  const today = new Date()
+  const dow = (today.getDay() + 6) % 7
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - dow)
+  const set = new Set<string>()
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
+    set.add(d.toLocaleDateString('en-CA'))
+  }
+  return set
+})
+
+// Group ALL days by "YYYY-MM" and build calendar grids
 const HU_MONTHS = ['január','február','március','április','május','június','július','augusztus','szeptember','október','november','december']
-// Mon-first weekday index (0=Mon … 6=Sun)
 function isoWeekday(dateStr: string) {
-  const d = new Date(dateStr)
-  return (d.getDay() + 6) % 7
+  return (new Date(dateStr).getDay() + 6) % 7
 }
 
-const oldCalendarMonths = computed(() => {
-  const byMonth: Record<string, typeof oldDays.value> = {}
-  for (const d of oldDays.value) {
+const calendarMonths = computed(() => {
+  type Entry = typeof days.value[0]
+  type Cell = { date: string | null; entry: Entry | null }
+  const byMonth: Record<string, Entry[]> = {}
+  for (const d of days.value) {
     const key = d.target_date.slice(0, 7)
     ;(byMonth[key] ??= []).push(d)
   }
-  // Sort months descending (newest first to match the card list)
   return Object.entries(byMonth)
     .sort(([a], [b]) => b.localeCompare(a))
     .map(([key, entries]) => {
       const [y, m] = key.split('-').map(Number)
       const daysInMonth = new Date(y, m, 0).getDate()
       const firstWeekday = isoWeekday(`${key}-01`)
-      // Build flat grid (pad start to align Mon-first)
       const byDate = Object.fromEntries(entries.map(e => [e.target_date, e]))
-      const flat: (typeof entries[0] | null)[] = Array(firstWeekday).fill(null)
+      // Padding cells have date: null; real days carry their date even without data
+      const flat: Cell[] = Array.from({ length: firstWeekday }, () => ({ date: null, entry: null }))
       for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${key}-${String(day).padStart(2, '0')}`
-        flat.push(byDate[dateStr] ?? null)
+        flat.push({ date: dateStr, entry: byDate[dateStr] ?? null })
       }
-      while (flat.length % 7 !== 0) flat.push(null)
-      // Chunk into weeks, trim leading and trailing all-empty weeks
-      const weeks: (typeof entries[0] | null)[][] = []
+      while (flat.length % 7 !== 0) flat.push({ date: null, entry: null })
+      const weeks: Cell[][] = []
       for (let i = 0; i < flat.length; i += 7) weeks.push(flat.slice(i, i + 7))
-      while (weeks.length > 0 && weeks[weeks.length - 1].every(c => c === null)) weeks.pop()
-      while (weeks.length > 0 && weeks[0].every(c => c === null)) weeks.shift()
+      while (weeks.length > 0 && weeks[weeks.length - 1].every(c => c.date === null)) weeks.pop()
+      while (weeks.length > 0 && weeks[0].every(c => c.date === null)) weeks.shift()
       return { key, year: y, month: m, label: `${HU_MONTHS[m - 1]} ${y}`, grid: weeks.flat() }
     })
 })
@@ -516,6 +532,7 @@ const oldCalendarMonths = computed(() => {
           <div class="card-date-block">
             <div class="card-title-row">
               <span v-if="day.isYesterday" class="yesterday-badge">Tegnap</span>
+              <span v-else-if="day.isDayBeforeYesterday" class="day-weekday">Tegnapelőtt</span>
               <span v-else-if="day.isToday" class="today-badge">Ma</span>
               <span v-else-if="day.isTomorrow" class="tomorrow-badge">Holnap</span>
               <span v-else class="day-weekday">{{ fmtWeekday(day.target_date) }}</span>
@@ -549,13 +566,13 @@ const oldCalendarMonths = computed(() => {
     </div>
 
     <!-- ── History divider ── -->
-    <div v-if="oldCalendarMonths.length" class="history-divider">
+    <div v-if="calendarMonths.length" class="history-divider">
       <span class="history-divider-label">Előzmények</span>
     </div>
 
-    <!-- ── Old data: calendar view ── -->
-    <div v-if="oldCalendarMonths.length" class="cal-section">
-      <div v-for="month in oldCalendarMonths" :key="month.key" class="cal-month" @click.self="closeCalPopover">
+    <!-- ── All data: calendar view ── -->
+    <div v-if="calendarMonths.length" class="cal-section">
+      <div v-for="month in calendarMonths" :key="month.key" class="cal-month" @click.self="closeCalPopover">
         <div class="cal-month-label">{{ month.label }}</div>
         <div class="cal-grid">
           <!-- Weekday headers Mon–Sun -->
@@ -563,17 +580,24 @@ const oldCalendarMonths = computed(() => {
           <!-- Day cells -->
           <template v-for="(cell, i) in month.grid" :key="i">
             <div
-              v-if="cell"
+              v-if="cell.date"
               class="cal-cell"
-              :class="[cell.bg ? 'day-card--gradient' : cell.style.card, { 'cal-cell--selected': selectedCalDate === cell.target_date }]"
-              :style="cell.bg ? { background: cell.bg } : {}"
-              @click.stop="openCalPopover($event, cell.target_date)"
+              :class="[
+                cell.entry ? (cell.entry.bg ? 'day-card--gradient' : cell.entry.style.card) : 'cal-cell--no-data',
+                {
+                  'cal-cell--selected': selectedCalDate === cell.date,
+                  'cal-cell--current-week': currentWeekDates.has(cell.date),
+                  'cal-cell--today': cell.date === todayStr,
+                }
+              ]"
+              :style="cell.entry?.bg ? { background: cell.entry.bg } : {}"
+              @click.stop="cell.entry ? openCalPopover($event, cell.date) : closeCalPopover()"
             >
-              <span class="cal-day-num">{{ Number(cell.target_date.slice(8)) }}</span>
-              <div v-if="cell.temp_min && cell.temp_max" class="cal-temp-area">
-                <span class="cal-temp">{{ cell.temp_min }} / {{ cell.temp_max }}</span>
+              <span class="cal-day-num">{{ Number(cell.date.slice(8)) }}</span>
+              <div v-if="cell.entry?.temp_min && cell.entry?.temp_max" class="cal-temp-area">
+                <span class="cal-temp">{{ cell.entry.temp_min }} / {{ cell.entry.temp_max }}</span>
               </div>
-              <span v-if="cell.entriesWithChanges.length" class="cal-change-dot"></span>
+              <span v-if="cell.entry?.entriesWithChanges.length" class="cal-change-dot"></span>
             </div>
             <div v-else class="cal-cell cal-cell--empty"></div>
           </template>
@@ -736,6 +760,30 @@ const oldCalendarMonths = computed(() => {
 .cal-cell--empty {
   background: transparent;
   border-color: transparent;
+}
+
+.cal-cell--no-data {
+  background: transparent;
+  opacity: 0.35;
+  cursor: default;
+}
+
+.cal-cell--current-week {
+  outline: 1.5px solid rgba(0, 0, 0, 0.22);
+  outline-offset: -1px;
+}
+
+.cal-cell--today .cal-day-num {
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  margin: -1px 0 0 -1px;
 }
 
 .cal-day-num {
