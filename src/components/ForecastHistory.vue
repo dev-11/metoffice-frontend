@@ -400,9 +400,8 @@ const days = computed(() => history.value.map(day => {
   const isTomorrow = day.target_date === tomorrow.toLocaleDateString('en-CA')
   const isYesterday = day.target_date === yesterday.toLocaleDateString('en-CA')
   const isDayBeforeYesterday = day.target_date === dayBeforeYesterday.toLocaleDateString('en-CA')
-  const newestDate = new Date(history.value[0]?.target_date ?? today)
-  const cutoff = new Date(newestDate)
-  cutoff.setDate(newestDate.getDate() - 4)
+  const cutoff = new Date(today)
+  cutoff.setDate(today.getDate() - 2) // tegnapelőtt and newer → cards; older → calendar
   const isOld = new Date(day.target_date) < cutoff
   return { ...day, latest, style, bg, hasOnDayChanges, isToday, isTomorrow, isYesterday, isDayBeforeYesterday, isOld, temp_min, temp_max, entriesWithChanges }
 }))
@@ -462,8 +461,9 @@ onUnmounted(() => { window.removeEventListener('resize', checkTempWidths) })
 // Split into recent (≤7 days) and old (>7 days)
 const recentDays = computed(() => days.value.filter(d => !d.isOld))
 
-// Today's date string and current ISO week (Mon–Sun)
+// Today / tomorrow date strings and current ISO week (Mon–Sun)
 const todayStr = new Date().toLocaleDateString('en-CA')
+const tomorrowStr = (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toLocaleDateString('en-CA') })()
 const currentWeekDates = computed(() => {
   const today = new Date()
   const dow = (today.getDay() + 6) % 7
@@ -508,8 +508,8 @@ const calendarMonths = computed(() => {
       while (flat.length % 7 !== 0) flat.push({ date: null, entry: null })
       const weeks: Cell[][] = []
       for (let i = 0; i < flat.length; i += 7) weeks.push(flat.slice(i, i + 7))
-      while (weeks.length > 0 && weeks[weeks.length - 1].every(c => c.date === null)) weeks.pop()
-      while (weeks.length > 0 && weeks[0].every(c => c.date === null)) weeks.shift()
+      while (weeks.length > 0 && weeks[weeks.length - 1].every(c => c.entry === null)) weeks.pop()
+      while (weeks.length > 0 && weeks[0].every(c => c.entry === null)) weeks.shift()
       return { key, year: y, month: m, label: `${HU_MONTHS[m - 1]} ${y}`, grid: weeks.flat() }
     })
 })
@@ -588,6 +588,7 @@ const calendarMonths = computed(() => {
                   'cal-cell--selected': selectedCalDate === cell.date,
                   'cal-cell--current-week': currentWeekDates.has(cell.date),
                   'cal-cell--today': cell.date === todayStr,
+                  'cal-cell--tomorrow': cell.date === tomorrowStr,
                 }
               ]"
               :style="cell.entry?.bg ? { background: cell.entry.bg } : {}"
@@ -776,6 +777,18 @@ const calendarMonths = computed(() => {
 .cal-cell--today .cal-day-num {
   background: rgba(0, 0, 0, 0.72);
   color: #fff;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  margin: -1px 0 0 -1px;
+}
+
+.cal-cell--tomorrow .cal-day-num {
+  border: 1.5px solid rgba(0, 0, 0, 0.5);
   border-radius: 50%;
   width: 22px;
   height: 22px;
