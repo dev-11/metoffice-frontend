@@ -125,7 +125,14 @@ onMounted(async () => {
     }))
     history.value = normalized.sort((a, b) => b.target_date.localeCompare(a.target_date))
   } catch (_e) {
-    history.value = _sampleHistory
+    const fixedOld: DayHistory[] = (_oldSample as any[]).map(day => ({
+      target_date: day.target_date,
+      forecasts: day.forecasts.map((f: any) => ({
+        observed_at: f.observed_at,
+        data: { front_type: f.front_type, temp_min: f.temp_min, temp_max: f.temp_max },
+      })),
+    }))
+    history.value = [..._sampleHistory, ...fixedOld].sort((a, b) => b.target_date.localeCompare(a.target_date))
   } finally {
     loading.value = false
   }
@@ -390,7 +397,11 @@ const days = computed(() => history.value.map(day => {
   const isToday = day.target_date === today.toLocaleDateString('en-CA')
   const isTomorrow = day.target_date === tomorrow.toLocaleDateString('en-CA')
   const isYesterday = day.target_date === yesterday.toLocaleDateString('en-CA')
-  return { ...day, latest, style, bg, hasOnDayChanges, isToday, isTomorrow, isYesterday, temp_min, temp_max, entriesWithChanges }
+  const newestDate = new Date(history.value[0]?.target_date ?? today)
+  const cutoff = new Date(newestDate)
+  cutoff.setDate(newestDate.getDate() - 7)
+  const isOld = new Date(day.target_date) < cutoff
+  return { ...day, latest, style, bg, hasOnDayChanges, isToday, isTomorrow, isYesterday, isOld, temp_min, temp_max, entriesWithChanges }
 }))
 
 function onDayEntries(day: DayHistory) {
@@ -400,14 +411,80 @@ function onDayEntries(day: DayHistory) {
 function toggleDay(targetDate: string) {
   expandedDays.value[targetDate] = !expandedDays.value[targetDate]
 }
+
+// ── Calendar cell popover ──
+const selectedCalDate = ref<string | null>(null)
+const calPopoverPos = ref({ top: 0, left: 0, width: 0 })
+
+const selectedCalDay = computed(() =>
+  selectedCalDate.value ? days.value.find(d => d.target_date === selectedCalDate.value) ?? null : null
+)
+
+function openCalPopover(event: MouseEvent, dateStr: string) {
+  if (selectedCalDate.value === dateStr) { selectedCalDate.value = null; return }
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const parentRect = (event.currentTarget as HTMLElement).closest('.cal-month')!.getBoundingClientRect()
+  calPopoverPos.value = {
+    top: rect.bottom - parentRect.top + 8,
+    left: 0,
+    width: parentRect.width,
+  }
+  selectedCalDate.value = dateStr
+}
+
+function closeCalPopover() {
+  selectedCalDate.value = null
+}
+
+// Split into recent (≤14 days) and old (>14 days)
+const recentDays = computed(() => days.value.filter(d => !d.isOld))
+const oldDays = computed(() => days.value.filter(d => d.isOld))
+
+// Group old days by "YYYY-MM" and build calendar grids
+const HU_MONTHS = ['január','február','március','április','május','június','július','augusztus','szeptember','október','november','december']
+// Mon-first weekday index (0=Mon … 6=Sun)
+function isoWeekday(dateStr: string) {
+  const d = new Date(dateStr)
+  return (d.getDay() + 6) % 7
+}
+
+const oldCalendarMonths = computed(() => {
+  const byMonth: Record<string, typeof oldDays.value> = {}
+  for (const d of oldDays.value) {
+    const key = d.target_date.slice(0, 7)
+    ;(byMonth[key] ??= []).push(d)
+  }
+  // Sort months descending (newest first to match the card list)
+  return Object.entries(byMonth)
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([key, entries]) => {
+      const [y, m] = key.split('-').map(Number)
+      const daysInMonth = new Date(y, m, 0).getDate()
+      const firstWeekday = isoWeekday(`${key}-01`)
+      // Build flat grid (pad start to align Mon-first)
+      const byDate = Object.fromEntries(entries.map(e => [e.target_date, e]))
+      const flat: (typeof entries[0] | null)[] = Array(firstWeekday).fill(null)
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${key}-${String(day).padStart(2, '0')}`
+        flat.push(byDate[dateStr] ?? null)
+      }
+      while (flat.length % 7 !== 0) flat.push(null)
+      // Chunk into weeks, trim trailing empty weeks
+      const weeks: (typeof entries[0] | null)[][] = []
+      for (let i = 0; i < flat.length; i += 7) weeks.push(flat.slice(i, i + 7))
+      while (weeks.length > 0 && weeks[weeks.length - 1].every(c => c === null)) weeks.pop()
+      return { key, year: y, month: m, label: `${HU_MONTHS[m - 1]} ${y}`, grid: weeks.flat() }
+    })
+})
 </script>
 
 <template>
   <div class="forecast-history">
     <div v-if="loading" class="state-msg">Loading…</div>
     <div v-else-if="error" class="state-msg state-error">{{ error }}</div>
+    <!-- ── Recent days: full cards ── -->
     <div
-      v-for="day in days"
+      v-for="day in recentDays"
       :key="day.target_date"
       class="day-card"
       :class="[day.bg ? 'day-card--gradient' : day.style.card, { 'day-card--today': day.isToday, 'day-card--tomorrow': day.isTomorrow, 'day-card--has-history': day.hasOnDayChanges }]"
@@ -449,6 +526,67 @@ function toggleDay(targetDate: string) {
         </div>
       </div>
     </div>
+
+    <!-- ── History divider ── -->
+    <div v-if="oldCalendarMonths.length" class="history-divider">
+      <span class="history-divider-label">Előzmények</span>
+    </div>
+
+    <!-- ── Old data: calendar view ── -->
+    <div v-if="oldCalendarMonths.length" class="cal-section">
+      <div v-for="month in oldCalendarMonths" :key="month.key" class="cal-month" @click.self="closeCalPopover">
+        <div class="cal-month-label">{{ month.label }}</div>
+        <div class="cal-grid">
+          <!-- Weekday headers Mon–Sun -->
+          <div v-for="h in ['H','K','Sze','Cs','P','Szo','V']" :key="h" class="cal-weekday-header">{{ h }}</div>
+          <!-- Day cells -->
+          <template v-for="(cell, i) in month.grid" :key="i">
+            <div
+              v-if="cell"
+              class="cal-cell"
+              :class="[cell.bg ? 'day-card--gradient' : cell.style.card, { 'cal-cell--selected': selectedCalDate === cell.target_date }]"
+              :style="cell.bg ? { background: cell.bg } : {}"
+              @click.stop="openCalPopover($event, cell.target_date)"
+            >
+              <span class="cal-day-num">{{ Number(cell.target_date.slice(8)) }}</span>
+              <span v-if="cell.entriesWithChanges.length" class="cal-change-dot"></span>
+            </div>
+            <div v-else class="cal-cell cal-cell--empty"></div>
+          </template>
+        </div>
+
+        <!-- Inline popover for selected day -->
+        <div
+          v-if="selectedCalDay && selectedCalDate?.startsWith(month.key)"
+          class="cal-popover"
+          :style="{ top: calPopoverPos.top + 'px' }"
+        >
+          <div class="cal-popover-header">
+            <span class="cal-popover-date">{{ fmtShortDate(selectedCalDay.target_date) }} · {{ fmtWeekday(selectedCalDay.target_date) }}</span>
+            <span class="front-pill cal-popover-pill" :class="selectedCalDay.bg ? 'front-mixed' : selectedCalDay.style.pill">{{ selectedCalDay.style.label }}</span>
+            <span v-if="selectedCalDay.temp_min" class="cal-popover-temp">{{ selectedCalDay.temp_min }} / {{ selectedCalDay.temp_max }}</span>
+            <button class="cal-popover-close" @click.stop="closeCalPopover">✕</button>
+          </div>
+          <div v-if="selectedCalDay.entriesWithChanges.length" class="timeline cal-popover-timeline">
+            <template v-for="(entry, i) in selectedCalDay.entriesWithChanges" :key="i">
+              <div class="timeline-row" :class="{ 'timeline-row--connected': i < selectedCalDay.entriesWithChanges.length - 1 }">
+                <div class="dot" :class="frontStyle(entry.data.front_type).dot"></div>
+                <span class="tl-time">{{ fmt(entry.observed_at) }}</span>
+                <span class="tl-inline-changes">
+                  <span v-for="(change, ci) in entry.changes" :key="change.field">
+                    <span v-if="ci > 0" class="tl-sep"> · </span>
+                    <span class="tl-from">{{ change.from }}</span>
+                    <span class="tl-arrow"> → </span>
+                    <span class="tl-to">{{ change.to }}</span>
+                  </span>
+                </span>
+              </div>
+            </template>
+          </div>
+          <div v-else class="cal-popover-no-changes">Nincs változás ezen a napon.</div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -457,6 +595,174 @@ function toggleDay(targetDate: string) {
   max-width: 100%;
   margin: 0 auto;
   padding: 0 1.5rem;
+}
+
+/* ── History divider ── */
+.history-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 1.5rem 0 0.75rem;
+}
+
+.history-divider::before,
+.history-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.history-divider-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #bbb;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ── Calendar section ── */
+.cal-section {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.cal-month {
+  background: rgba(0,0,0,0.02);
+  border: 0.5px solid rgba(0,0,0,0.08);
+  border-radius: 12px;
+  padding: 0.875rem 1rem;
+  position: relative;
+}
+
+.cal-month-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+  text-transform: capitalize;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.02em;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.cal-weekday-header {
+  font-size: 10px;
+  color: #bbb;
+  text-align: center;
+  padding-bottom: 3px;
+  font-weight: 500;
+}
+
+.cal-cell {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  border: 0.5px solid rgba(0,0,0,0.10);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: default;
+  transition: opacity 0.15s;
+}
+
+.cal-cell:hover {
+  opacity: 0.8;
+  border-color: rgba(0,0,0,0.25);
+}
+
+.cal-cell--empty {
+  background: transparent;
+  border-color: transparent;
+}
+
+.cal-day-num {
+  font-size: 15px;
+  font-weight: 500;
+  color: #555;
+  line-height: 1;
+}
+
+.cal-change-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.25);
+  margin-top: 2px;
+}
+
+.cal-cell--selected {
+  outline: 2px solid rgba(0,0,0,0.35);
+  outline-offset: -2px;
+}
+
+.cal-popover {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 0.5px solid rgba(0,0,0,0.12);
+  border-radius: 10px;
+  padding: 10px 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  z-index: 10;
+}
+
+.cal-popover-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.cal-popover-date {
+  font-size: 12px;
+  color: #888;
+}
+
+.cal-popover-pill {
+  font-size: 12px !important;
+  padding: 3px 9px !important;
+  border-radius: 8px !important;
+}
+
+.cal-popover-temp {
+  font-size: 12px;
+  font-weight: 600;
+  color: #44403c;
+}
+
+.cal-popover-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: #bbb;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.cal-popover-close:hover {
+  color: #666;
+}
+
+.cal-popover-timeline {
+  padding-top: 2px;
+}
+
+.cal-popover-no-changes {
+  font-size: 12px;
+  color: #aaa;
 }
 
 .state-msg {
