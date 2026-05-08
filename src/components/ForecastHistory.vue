@@ -402,7 +402,7 @@ const days = computed(() => history.value.map(day => {
   const isDayBeforeYesterday = day.target_date === dayBeforeYesterday.toLocaleDateString('en-CA')
   const cutoff = new Date(today)
   cutoff.setDate(today.getDate() - 2) // tegnapelőtt and newer → cards; older → calendar
-  const isOld = new Date(day.target_date) < cutoff
+  const isOld = day.target_date < cutoff.toLocaleDateString('en-CA') // string compare avoids UTC timezone shift
   return { ...day, latest, style, bg, hasOnDayChanges, isToday, isTomorrow, isYesterday, isDayBeforeYesterday, isOld, temp_min, temp_max, entriesWithChanges }
 }))
 
@@ -461,22 +461,10 @@ onUnmounted(() => { window.removeEventListener('resize', checkTempWidths) })
 // Split into recent (≤7 days) and old (>7 days)
 const recentDays = computed(() => days.value.filter(d => !d.isOld))
 
-// Today / tomorrow date strings and current ISO week (Mon–Sun)
+// Today / tomorrow / stack-cutoff date strings
 const todayStr = new Date().toLocaleDateString('en-CA')
 const tomorrowStr = (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toLocaleDateString('en-CA') })()
-const currentWeekDates = computed(() => {
-  const today = new Date()
-  const dow = (today.getDay() + 6) % 7
-  const monday = new Date(today)
-  monday.setDate(today.getDate() - dow)
-  const set = new Set<string>()
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(monday)
-    d.setDate(monday.getDate() + i)
-    set.add(d.toLocaleDateString('en-CA'))
-  }
-  return set
-})
+const stackCutoffStr = (() => { const d = new Date(); d.setDate(d.getDate() - 2); return d.toLocaleDateString('en-CA') })()
 
 // Group ALL days by "YYYY-MM" and build calendar grids
 const HU_MONTHS = ['január','február','március','április','május','június','július','augusztus','szeptember','október','november','december']
@@ -586,7 +574,7 @@ const calendarMonths = computed(() => {
                 cell.entry ? (cell.entry.bg ? 'day-card--gradient' : cell.entry.style.card) : 'cal-cell--no-data',
                 {
                   'cal-cell--selected': selectedCalDate === cell.date,
-                  'cal-cell--current-week': currentWeekDates.has(cell.date),
+                  'cal-cell--in-stack': cell.date !== null && cell.date >= stackCutoffStr,
                   'cal-cell--today': cell.date === todayStr,
                   'cal-cell--tomorrow': cell.date === tomorrowStr,
                 }
@@ -769,7 +757,7 @@ const calendarMonths = computed(() => {
   cursor: default;
 }
 
-.cal-cell--current-week {
+.cal-cell--in-stack {
   outline: 1.5px solid rgba(0, 0, 0, 0.22);
   outline-offset: -1px;
 }
