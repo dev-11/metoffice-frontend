@@ -489,10 +489,11 @@ const oldCalendarMonths = computed(() => {
         flat.push(byDate[dateStr] ?? null)
       }
       while (flat.length % 7 !== 0) flat.push(null)
-      // Chunk into weeks, trim trailing empty weeks
+      // Chunk into weeks, trim leading and trailing all-empty weeks
       const weeks: (typeof entries[0] | null)[][] = []
       for (let i = 0; i < flat.length; i += 7) weeks.push(flat.slice(i, i + 7))
       while (weeks.length > 0 && weeks[weeks.length - 1].every(c => c === null)) weeks.pop()
+      while (weeks.length > 0 && weeks[0].every(c => c === null)) weeks.shift()
       return { key, year: y, month: m, label: `${HU_MONTHS[m - 1]} ${y}`, grid: weeks.flat() }
     })
 })
