@@ -515,12 +515,9 @@ const calendarMonths = computed(() => {
         const dateStr = `${key}-${String(day).padStart(2, '0')}`
         flat.push({ date: dateStr, entry: byDate[dateStr] ?? null })
       }
-      while (flat.length % 7 !== 0) flat.push({ date: null, entry: null })
-      const weeks: Cell[][] = []
-      for (let i = 0; i < flat.length; i += 7) weeks.push(flat.slice(i, i + 7))
-      while (weeks.length > 0 && weeks[weeks.length - 1].every(c => c.entry === null)) weeks.pop()
-      while (weeks.length > 0 && weeks[0].every(c => c.entry === null)) weeks.shift()
-      return { key, year: y, month: m, label: `${HU_MONTHS[m - 1]} ${y}`, grid: weeks.flat() }
+      // Always pad to exactly 6 rows (42 cells) so height never changes between months
+      while (flat.length < 42) flat.push({ date: null, entry: null })
+      return { key, year: y, month: m, label: `${y}. ${HU_MONTHS[m - 1]}`, grid: flat }
     })
 })
 
@@ -540,8 +537,24 @@ const currentMonthIdx = computed(() => availableKeys.value.indexOf(currentMonthK
 const canGoPrev = computed(() => currentMonthIdx.value > 0)
 const canGoNext = computed(() => currentMonthIdx.value < availableKeys.value.length - 1)
 
-function prevMonth() { if (canGoPrev.value) currentMonthKey.value = availableKeys.value[currentMonthIdx.value - 1] }
-function nextMonth() { if (canGoNext.value) currentMonthKey.value = availableKeys.value[currentMonthIdx.value + 1] }
+const slideDirection = ref<'left' | 'right'>('left')
+
+function prevMonth() {
+  if (canGoPrev.value) {
+    slideDirection.value = 'right'
+    currentMonthKey.value = availableKeys.value[currentMonthIdx.value - 1]
+  }
+}
+function nextMonth() {
+  if (canGoNext.value) {
+    slideDirection.value = 'left'
+    currentMonthKey.value = availableKeys.value[currentMonthIdx.value + 1]
+  }
+}
+function jumpToMonth(key: string) {
+  slideDirection.value = key > currentMonthKey.value ? 'left' : 'right'
+  currentMonthKey.value = key
+}
 
 const displayedMonths = computed(() =>
   isDesktop.value
@@ -559,8 +572,8 @@ function onCalTouchStart(e: TouchEvent) { _touchStartX = e.touches[0].clientX }
 function onCalTouchEnd(e: TouchEvent) {
   const dx = e.changedTouches[0].clientX - _touchStartX
   if (Math.abs(dx) > 48) {
-    if (dx < 0) nextMonth()  // swipe left  → newer month
-    else         prevMonth() // swipe right → older month
+    if (dx < 0) nextMonth()
+    else         prevMonth()
   }
 }
 </script>
@@ -628,10 +641,12 @@ function onCalTouchEnd(e: TouchEvent) {
     </div>
 
     <!-- ── All data: calendar view ── -->
-    <div
+    <TransitionGroup
       v-if="calendarMonths.length"
+      :name="isDesktop ? '' : 'cal-slide-' + slideDirection"
+      tag="div"
       class="cal-section"
-      :class="{ 'cal-section--annual': isDesktop }"
+      :class="{ 'cal-section--annual': isDesktop, 'cal-slide-wrap': !isDesktop }"
       @touchstart="onCalTouchStart"
       @touchend="onCalTouchEnd"
     >
@@ -646,10 +661,10 @@ function onCalTouchEnd(e: TouchEvent) {
               v-if="cell.date"
               class="cal-cell"
               :class="[
-                cell.entry ? (cell.entry.bg ? 'day-card--gradient' : cell.entry.style.card) : 'cal-cell--no-data',
+                cell.entry ? (cell.entry.bg ? 'day-card--gradient' : cell.entry.style.card) : (cell.date! > tomorrowStr ? 'cal-cell--future' : 'cal-cell--no-data'),
                 {
                   'cal-cell--selected': selectedCalDate === cell.date,
-                  'cal-cell--in-stack': cell.date !== null && cell.date >= stackCutoffStr,
+                  'cal-cell--in-stack': cell.date !== null && cell.date >= stackCutoffStr && cell.date <= tomorrowStr,
                   'cal-cell--today': cell.date === todayStr,
                   'cal-cell--tomorrow': cell.date === tomorrowStr,
                 }
@@ -698,6 +713,17 @@ function onCalTouchEnd(e: TouchEvent) {
           <div v-else class="cal-popover-no-changes">Nincs változás ezen a napon.</div>
         </div>
       </div>
+    </TransitionGroup>
+
+    <!-- ── Pagination dots (mobile only) ── -->
+    <div v-if="!isDesktop && calendarMonths.length" class="cal-dots">
+      <span
+        v-for="key in availableKeys"
+        :key="key"
+        class="cal-dot"
+        :class="{ 'cal-dot--active': key === currentMonthKey }"
+        @click="jumpToMonth(key)"
+      ></span>
     </div>
   </div>
 </template>
@@ -789,6 +815,55 @@ function onCalTouchEnd(e: TouchEvent) {
   text-transform: capitalize;
 }
 
+/* ── Slide transition ── */
+.cal-slide-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.cal-slide-left-enter-active,
+.cal-slide-left-leave-active,
+.cal-slide-right-enter-active,
+.cal-slide-right-leave-active {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+}
+
+.cal-slide-left-leave-active,
+.cal-slide-right-leave-active {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+.cal-slide-left-enter-from  { transform: translateX(100%);  opacity: 0; }
+.cal-slide-left-leave-to    { transform: translateX(-100%); opacity: 0; }
+.cal-slide-right-enter-from { transform: translateX(-100%); opacity: 0; }
+.cal-slide-right-leave-to   { transform: translateX(100%);  opacity: 0; }
+
+/* ── Pagination dots ── */
+.cal-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 0 2px;
+}
+.cal-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: width 0.2s, background 0.2s, border-radius 0.2s;
+  flex-shrink: 0;
+}
+.cal-dot--active {
+  width: 18px;
+  border-radius: 3px;
+  background: #44403c;
+}
+
 /* ── Calendar section ── */
 .cal-section {
   margin-top: 1.25rem;
@@ -875,6 +950,12 @@ function onCalTouchEnd(e: TouchEvent) {
 
 .cal-cell--no-data {
   background: transparent;
+  cursor: default;
+}
+
+.cal-cell--future {
+  background: transparent;
+  border-color: transparent;
   opacity: 0.35;
   cursor: default;
 }
