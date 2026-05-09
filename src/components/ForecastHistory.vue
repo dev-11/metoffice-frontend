@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUpdated, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUpdated, onUnmounted, nextTick } from 'vue'
 import axios from 'axios'
 
 interface ForecastData {
@@ -432,6 +432,9 @@ function openCalPopover(event: MouseEvent, dateStr: string) {
     width: parentRect.width,
   }
   selectedCalDate.value = dateStr
+  nextTick(() => {
+    document.querySelector('.cal-popover')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  })
 }
 
 function closeCalPopover() {
