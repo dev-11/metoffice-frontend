@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUpdated, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUpdated, onUnmounted, nextTick } from 'vue'
 import axios from 'axios'
 
 interface ForecastData {
@@ -458,8 +458,21 @@ function checkTempWidths() {
 }
 
 onUpdated(() => { checkTempWidths() })
-onMounted(() => { window.addEventListener('resize', checkTempWidths) })
-onUnmounted(() => { window.removeEventListener('resize', checkTempWidths) })
+
+let _mq: MediaQueryList | null = null
+let _mqHandler: ((e: MediaQueryListEvent) => void) | null = null
+
+onMounted(() => {
+  window.addEventListener('resize', checkTempWidths)
+  _mq = window.matchMedia('(min-width: 768px)')
+  isDesktop.value = _mq.matches
+  _mqHandler = (e) => { isDesktop.value = e.matches }
+  _mq.addEventListener('change', _mqHandler)
+})
+onUnmounted(() => {
+  window.removeEventListener('resize', checkTempWidths)
+  if (_mq && _mqHandler) _mq.removeEventListener('change', _mqHandler)
+})
 
 // Split into recent (≤7 days) and old (>7 days)
 const recentDays = computed(() => days.value.filter(d => !d.isOld))
@@ -474,6 +487,12 @@ const HU_MONTHS = ['január','február','március','április','május','június'
 function isoWeekday(dateStr: string) {
   return (new Date(dateStr).getDay() + 6) % 7
 }
+
+// ── Desktop / mobile detection ──
+const isDesktop = ref(false)
+
+// ── Month navigation (mobile single-month view) ──
+const currentMonthKey = ref(new Date().toLocaleDateString('en-CA').slice(0, 7))
 
 const calendarMonths = computed(() => {
   type Entry = typeof days.value[0]
@@ -504,6 +523,46 @@ const calendarMonths = computed(() => {
       return { key, year: y, month: m, label: `${HU_MONTHS[m - 1]} ${y}`, grid: weeks.flat() }
     })
 })
+
+// Clamp currentMonthKey to available data when history loads
+watch(calendarMonths, (months) => {
+  const keys = months.map(m => m.key) // already sorted newest-first
+  if (keys.length && !keys.includes(currentMonthKey.value)) {
+    const thisMonth = new Date().toLocaleDateString('en-CA').slice(0, 7)
+    currentMonthKey.value = keys.includes(thisMonth) ? thisMonth : keys[0]
+  }
+})
+
+const availableKeys = computed(() =>
+  calendarMonths.value.map(m => m.key).slice().sort() // ascending (oldest first)
+)
+const currentMonthIdx = computed(() => availableKeys.value.indexOf(currentMonthKey.value))
+const canGoPrev = computed(() => currentMonthIdx.value > 0)
+const canGoNext = computed(() => currentMonthIdx.value < availableKeys.value.length - 1)
+
+function prevMonth() { if (canGoPrev.value) currentMonthKey.value = availableKeys.value[currentMonthIdx.value - 1] }
+function nextMonth() { if (canGoNext.value) currentMonthKey.value = availableKeys.value[currentMonthIdx.value + 1] }
+
+const displayedMonths = computed(() =>
+  isDesktop.value
+    ? calendarMonths.value.slice().reverse() // oldest → newest left to right
+    : calendarMonths.value.filter(m => m.key === currentMonthKey.value)
+)
+
+const currentMonthLabel = computed(() =>
+  calendarMonths.value.find(m => m.key === currentMonthKey.value)?.label ?? ''
+)
+
+// Swipe detection
+let _touchStartX = 0
+function onCalTouchStart(e: TouchEvent) { _touchStartX = e.touches[0].clientX }
+function onCalTouchEnd(e: TouchEvent) {
+  const dx = e.changedTouches[0].clientX - _touchStartX
+  if (Math.abs(dx) > 48) {
+    if (dx < 0) nextMonth()  // swipe left  → newer month
+    else         prevMonth() // swipe right → older month
+  }
+}
 </script>
 
 <template>
@@ -561,9 +620,22 @@ const calendarMonths = computed(() => {
       <span class="history-divider-label">Előzmények</span>
     </div>
 
+    <!-- ── Month nav (mobile only) ── -->
+    <div v-if="calendarMonths.length && !isDesktop" class="cal-nav">
+      <button class="cal-nav-btn" :disabled="!canGoPrev" @click="prevMonth">‹</button>
+      <span class="cal-nav-label">{{ currentMonthLabel }}</span>
+      <button class="cal-nav-btn" :disabled="!canGoNext" @click="nextMonth">›</button>
+    </div>
+
     <!-- ── All data: calendar view ── -->
-    <div v-if="calendarMonths.length" class="cal-section">
-      <div v-for="month in calendarMonths" :key="month.key" class="cal-month" @click.self="closeCalPopover">
+    <div
+      v-if="calendarMonths.length"
+      class="cal-section"
+      :class="{ 'cal-section--annual': isDesktop }"
+      @touchstart="onCalTouchStart"
+      @touchend="onCalTouchEnd"
+    >
+      <div v-for="month in displayedMonths" :key="month.key" class="cal-month" @click.self="closeCalPopover">
         <div class="cal-month-label">{{ month.label }}</div>
         <div class="cal-grid">
           <!-- Weekday headers Mon–Sun -->
@@ -690,6 +762,33 @@ const calendarMonths = computed(() => {
   }
 }
 
+/* ── Month navigation (mobile) ── */
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0.75rem 0 0.25rem;
+}
+.cal-nav-btn {
+  background: none;
+  border: none;
+  font-size: 26px;
+  color: #888;
+  cursor: pointer;
+  padding: 2px 10px;
+  border-radius: 8px;
+  line-height: 1;
+  transition: background 0.12s;
+}
+.cal-nav-btn:hover:not(:disabled) { background: rgba(0,0,0,0.05); }
+.cal-nav-btn:disabled { color: #ddd; cursor: default; }
+.cal-nav-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #555;
+  text-transform: capitalize;
+}
+
 /* ── Calendar section ── */
 .cal-section {
   margin-top: 1.25rem;
@@ -697,6 +796,26 @@ const calendarMonths = computed(() => {
   flex-direction: column;
   gap: 1.25rem;
 }
+
+/* Annual grid (desktop) */
+.cal-section--annual {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+@media (min-width: 1100px) {
+  .cal-section--annual { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* Compact cells in annual view */
+.cal-section--annual .cal-day-num { font-size: 11px !important; }
+.cal-section--annual .cal-weekday-header { font-size: 8px !important; padding-bottom: 2px !important; }
+.cal-section--annual .cal-month-label { font-size: 11px !important; margin-bottom: 0.35rem !important; }
+.cal-section--annual .cal-cell { border-radius: 4px !important; padding: 3px 4px !important; }
+.cal-section--annual .cal-grid { gap: 2px !important; }
+.cal-section--annual .cal-temp-area { display: none !important; }
+.cal-section--annual .cal-change-dot { width: 4px !important; height: 4px !important; bottom: 3px !important; right: 3px !important; }
 
 .cal-month {
   background: rgba(0,0,0,0.02);
