@@ -819,19 +819,19 @@ function openCalPopover(event: MouseEvent, dateStr: string) {
     selectedCalDate.value = null
     return
   }
-  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
-  const parentRect = (event.currentTarget as HTMLElement)
+  const cellRect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const calRect = (event.currentTarget as HTMLElement)
     .closest('.cal-month')!
     .getBoundingClientRect()
+  const minWidth = isDesktop.value ? 320 : calRect.width
+  const popoverWidth = Math.max(calRect.width, minWidth)
+  const left = Math.min(calRect.left, window.innerWidth - popoverWidth - 8)
   calPopoverPos.value = {
-    top: rect.bottom - parentRect.top + 8,
-    left: 0,
-    width: parentRect.width,
+    top: cellRect.bottom + 8,
+    left: Math.max(8, left),
+    width: popoverWidth,
   }
   selectedCalDate.value = dateStr
-  nextTick(() => {
-    document.querySelector('.cal-popover')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-  })
 }
 
 function closeCalPopover() {
@@ -1151,55 +1151,66 @@ function onCalTouchEnd(e: TouchEvent) {
           </template>
         </div>
 
-        <!-- Inline popover for selected day -->
-        <div
-          v-if="selectedCalDay && selectedCalDate?.startsWith(month.key)"
-          class="cal-popover"
-          :style="{ top: calPopoverPos.top + 'px' }"
-        >
-          <div class="cal-popover-header">
+      </div>
+    </TransitionGroup>
+
+    <!-- Calendar day popover — teleported to body so it floats over the page -->
+    <Teleport to="body">
+      <div
+        v-if="selectedCalDay"
+        class="cal-popover"
+        :style="{
+          top: calPopoverPos.top + 'px',
+          left: calPopoverPos.left + 'px',
+          width: calPopoverPos.width + 'px',
+        }"
+      >
+        <div class="cal-popover-header">
+          <div class="cal-popover-header-top">
             <span class="cal-popover-date"
               >{{ fmtShortDate(selectedCalDay.target_date) }} ·
               {{ fmtWeekday(selectedCalDay.target_date) }}</span
             >
+            <button class="cal-popover-close" @click.stop="closeCalPopover">✕</button>
+          </div>
+          <div class="cal-popover-header-bottom">
             <span
               class="front-pill cal-popover-pill"
-              :class="selectedCalDay.bg ? 'front-mixed' : selectedCalDay.style.pill"
+              :class="selectedCalDay.style.pill"
               >{{ selectedCalDay.style.label }}</span
             >
             <span v-if="selectedCalDay.temp_min" class="cal-popover-temp"
               >{{ selectedCalDay.temp_min }} / {{ selectedCalDay.temp_max }}</span
             >
-            <button class="cal-popover-close" @click.stop="closeCalPopover">✕</button>
           </div>
-          <div
-            v-if="selectedCalDay.entriesWithChanges.length"
-            class="timeline cal-popover-timeline"
-          >
-            <template v-for="(entry, i) in selectedCalDay.entriesWithChanges" :key="i">
-              <div
-                class="timeline-row"
-                :class="{
-                  'timeline-row--connected': i < selectedCalDay.entriesWithChanges.length - 1,
-                }"
-              >
-                <div class="dot" :class="frontStyle(entry.data.front_type).dot"></div>
-                <span class="tl-time">{{ fmt(entry.observed_at) }}</span>
-                <span class="tl-inline-changes">
-                  <span v-for="(change, ci) in entry.changes" :key="change.field">
-                    <span v-if="ci > 0" class="tl-sep"> · </span>
-                    <span class="tl-from">{{ change.from }}</span>
-                    <span class="tl-arrow"> → </span>
-                    <span class="tl-to">{{ change.to }}</span>
-                  </span>
-                </span>
-              </div>
-            </template>
-          </div>
-          <div v-else class="cal-popover-no-changes">Nincs változás ezen a napon.</div>
         </div>
+        <div
+          v-if="selectedCalDay.entriesWithChanges.length"
+          class="timeline cal-popover-timeline"
+        >
+          <template v-for="(entry, i) in selectedCalDay.entriesWithChanges" :key="i">
+            <div
+              class="timeline-row"
+              :class="{
+                'timeline-row--connected': i < selectedCalDay.entriesWithChanges.length - 1,
+              }"
+            >
+              <div class="dot" :class="frontStyle(entry.data.front_type).dot"></div>
+              <span class="tl-time">{{ fmt(entry.observed_at) }}</span>
+              <span class="tl-inline-changes">
+                <span v-for="(change, ci) in entry.changes" :key="change.field">
+                  <span v-if="ci > 0" class="tl-sep"> · </span>
+                  <span class="tl-from">{{ change.from }}</span>
+                  <span class="tl-arrow"> → </span>
+                  <span class="tl-to">{{ change.to }}</span>
+                </span>
+              </span>
+            </div>
+          </template>
+        </div>
+        <div v-else class="cal-popover-no-changes">Nincs változás ezen a napon.</div>
       </div>
-    </TransitionGroup>
+    </Teleport>
 
     <!-- ── Pagination dots (mobile only) ── -->
     <div v-if="!isDesktop && calendarMonths.length" class="cal-dots">
@@ -1414,14 +1425,14 @@ function onCalTouchEnd(e: TouchEvent) {
 
 /* Compact cells in annual view */
 .cal-section--annual .cal-day-num {
-  font-size: 11px !important;
+  font-size: 12px !important;
 }
 .cal-section--annual .cal-weekday-header {
-  font-size: 8px !important;
+  font-size: 10px !important;
   padding-bottom: 2px !important;
 }
 .cal-section--annual .cal-month-label {
-  font-size: 11px !important;
+  font-size: 12px !important;
   margin-bottom: 0.35rem !important;
 }
 .cal-section--annual .cal-cell {
@@ -1566,39 +1577,41 @@ function onCalTouchEnd(e: TouchEvent) {
 }
 
 .cal-popover {
-  position: absolute;
-  left: 0;
-  right: 0;
+  position: fixed;
   background: #fff;
   border: 0.5px solid rgba(0, 0, 0, 0.12);
   border-radius: 10px;
-  padding: 10px 14px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  z-index: 10;
+  padding: 12px 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  z-index: 1000;
 }
 
 .cal-popover-header {
+  margin-bottom: 10px;
+}
+
+.cal-popover-header-top {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.cal-popover-header-bottom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .cal-popover-date {
-  font-size: 12px;
+  font-size: 13px;
   color: #888;
 }
 
-.cal-popover-pill {
-  font-size: 12px !important;
-  padding: 3px 9px !important;
-  border-radius: 8px !important;
-}
 
 .cal-popover-temp {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   color: #44403c;
 }
 
@@ -1618,12 +1631,66 @@ function onCalTouchEnd(e: TouchEvent) {
 }
 
 .cal-popover-timeline {
-  padding-top: 2px;
+  border-top: 0.5px solid rgba(0, 0, 0, 0.07);
+  padding-top: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+@media (min-width: 768px) {
+  .cal-popover {
+    min-width: 280px;
+  }
+  .cal-popover-timeline {
+    max-height: none;
+    overflow-y: visible;
+  }
+  /* Desktop header: two-row layout with tighter spacing */
+  .cal-popover-header {
+    margin-bottom: 8px;
+  }
+  .cal-popover-header-top {
+    margin-bottom: 4px;
+  }
+  .cal-popover-date {
+    font-size: 11px;
+  }
+  .cal-popover-temp {
+    font-size: 11px;
+  }
+  .cal-popover-timeline .tl-time,
+  .cal-popover-timeline .tl-inline-changes {
+    font-size: 11px;
+  }
+}
+
+/* Each change on its own line inside the popover */
+.cal-popover-timeline .tl-inline-changes {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cal-popover-timeline .tl-inline-changes > span {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
+.cal-popover-timeline .tl-sep {
+  display: none;
+}
+
+.cal-popover-timeline .timeline-row {
+  padding: 5px 0;
+  align-items: flex-start;
 }
 
 .cal-popover-no-changes {
   font-size: 12px;
   color: #aaa;
+  padding-top: 8px;
+  border-top: 0.5px solid rgba(0, 0, 0, 0.07);
 }
 
 .state-msg {
@@ -1796,6 +1863,24 @@ function onCalTouchEnd(e: TouchEvent) {
   }
   .weather-wind {
     font-size: 16px;
+  }
+}
+
+/* Popover pill — must be after the @media (min-width: 769px) .front-pill rule to win */
+/* Mobile: original compact pill */
+.cal-popover-pill {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  padding: 3px 9px !important;
+  border-radius: 6px !important;
+}
+/* Desktop: smaller pill to match the tighter annual-grid scale */
+@media (min-width: 768px) {
+  .cal-popover-pill {
+    font-size: 11px !important;
+    padding: 3px 7px !important;
+    border-radius: 4px !important;
   }
 }
 
