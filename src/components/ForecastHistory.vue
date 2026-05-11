@@ -2333,7 +2333,7 @@ function onCalTouchEnd(e: TouchEvent) {
 .is-dark .history-divider-label  { color: #78716c; }
 
 /* Calendar month card */
-.is-dark .cal-month        { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.1); }
+.is-dark .cal-month        { background: #242424; border-color: rgba(255, 255, 255, 0.08); }
 .is-dark .cal-month-label  { color: #a8a29e; }
 .is-dark .cal-weekday-header { color: #57534e; }
 
@@ -2360,7 +2360,7 @@ function onCalTouchEnd(e: TouchEvent) {
 
 /* Card cell & day-card backgrounds */
 .is-dark .card-cold       { background: #223850; border-color: #3a6080; }
-.is-dark .card-warm       { background: #3e2424; border-color: #6e3838; }
+.is-dark .card-warm       { background: #5c2e2e; border-color: #8c4444; }
 .is-dark .card-no         { background: #302d2a; border-color: #504c48; }
 .is-dark .card-stationary { background: #3c2a10; border-color: #6e4e20; }
 .is-dark .card-double     { background: #2c2248; border-color: #503880; }

@@ -63,7 +63,7 @@ body.is-dark {
   --color-heading: var(--vt-c-text-dark-1);
   --color-text: var(--vt-c-text-dark-2);
   /* Set directly so it wins over any static body{background} reset */
-  background: #242424;
+  background: #1e1e1e;
   color: var(--vt-c-text-dark-2);
 }
 
