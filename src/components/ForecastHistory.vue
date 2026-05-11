@@ -1010,7 +1010,7 @@ async function updateSlideHeight() {
   }
 }
 // Initialise synchronously so the correct theme class is present on first render
-const isDarkMode = ref(true) // TODO: revert — window.matchMedia('(prefers-color-scheme: dark)').matches
+const isDarkMode = ref(false)
 // Keep document.body in sync — needed for the teleported cal-popover
 watch(isDarkMode, (dark) => {
   document.body.classList.toggle('is-dark', dark)
