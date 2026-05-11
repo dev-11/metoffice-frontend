@@ -939,7 +939,12 @@ onMounted(() => {
   _mq.addEventListener('change', _mqHandler)
 
   _dmq = window.matchMedia('(prefers-color-scheme: dark)')
-  _dmqHandler = (e) => { isDarkMode.value = e.matches }
+  _dmqHandler = (e) => {
+    // Only follow OS changes if the user hasn't set a manual preference
+    if (localStorage.getItem('theme') === null) {
+      isDarkMode.value = e.matches
+    }
+  }
   _dmq.addEventListener('change', _dmqHandler)
 
   updateSlideHeight()
@@ -1009,8 +1014,13 @@ async function updateSlideHeight() {
     }
   }
 }
-// Initialise synchronously so the correct theme class is present on first render
-const isDarkMode = ref(false)
+// Initialise from localStorage (user override) or fall back to OS preference
+const _storedTheme = localStorage.getItem('theme')
+const isDarkMode = ref(
+  _storedTheme !== null
+    ? _storedTheme === 'dark'
+    : window.matchMedia('(prefers-color-scheme: dark)').matches
+)
 // Keep document.body in sync — needed for the teleported cal-popover
 watch(isDarkMode, (dark) => {
   document.body.classList.toggle('is-dark', dark)
@@ -1118,7 +1128,7 @@ function onCalTouchEnd(e: TouchEvent) {
     <button
       class="theme-toggle"
       :title="isDarkMode ? 'Világos mód' : 'Sötét mód'"
-      @click="isDarkMode = !isDarkMode"
+      @click="isDarkMode = !isDarkMode; localStorage.setItem('theme', isDarkMode ? 'dark' : 'light')"
     >◑</button>
     <div v-if="loading" class="state-msg">Loading…</div>
     <div v-else-if="error" class="state-msg state-error">{{ error }}</div>
