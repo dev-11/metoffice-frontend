@@ -1495,7 +1495,6 @@ function onCalTouchEnd(e: TouchEvent) {
   position: relative;
   cursor: default;
   transition: opacity 0.15s;
-  overflow: hidden;
 }
 
 .cal-cell:hover {
