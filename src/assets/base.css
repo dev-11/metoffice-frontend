@@ -1,3 +1,8 @@
+/* Declare native dark-mode support — prevents Chrome/Edge auto-dark from interfering */
+html {
+  color-scheme: light dark;
+}
+
 /* color palette from <https://github.com/vuejs/theme> */
 :root {
   --vt-c-white: #ffffff;
@@ -36,18 +41,30 @@
   --section-gap: 160px;
 }
 
+/* Dark mode — triggered by OS preference OR by body.is-dark class (set by JS) */
 @media (prefers-color-scheme: dark) {
   :root {
     --color-background: var(--vt-c-black);
     --color-background-soft: var(--vt-c-black-soft);
     --color-background-mute: var(--vt-c-black-mute);
-
     --color-border: var(--vt-c-divider-dark-2);
     --color-border-hover: var(--vt-c-divider-dark-1);
-
     --color-heading: var(--vt-c-text-dark-1);
     --color-text: var(--vt-c-text-dark-2);
   }
+}
+
+body.is-dark {
+  --color-background: var(--vt-c-black);
+  --color-background-soft: var(--vt-c-black-soft);
+  --color-background-mute: var(--vt-c-black-mute);
+  --color-border: var(--vt-c-divider-dark-2);
+  --color-border-hover: var(--vt-c-divider-dark-1);
+  --color-heading: var(--vt-c-text-dark-1);
+  --color-text: var(--vt-c-text-dark-2);
+  /* Set directly so it wins over any static body{background} reset */
+  background: var(--vt-c-black);
+  color: var(--vt-c-text-dark-2);
 }
 
 *,

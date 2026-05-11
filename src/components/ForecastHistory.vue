@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUpdated, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUpdated, onUnmounted, nextTick, type Ref } from 'vue'
 import axios from 'axios'
 
 interface ForecastData {
@@ -69,6 +69,14 @@ const FRONT_COLORS: Record<string, string> = {
   double_front: '#ede9fe',
 }
 
+const FRONT_COLORS_DARK: Record<string, string> = {
+  cold_front: '#1a2e42',
+  warm_front: '#2d1a1a',
+  no_front: '#252220',
+  stationary_front: '#2e1e0a',
+  double_front: '#211a38',
+}
+
 const FRONT_STYLES: Record<
   string,
   { pill: string; dot: string; label: string; short: string; card: string }
@@ -117,7 +125,9 @@ function cardBackground(day: DayHistory) {
   if (sameDayForecasts.length < 2) return null
   const uniqueTypes = [...new Set(sameDayForecasts.map((f) => f.data.front_type))]
   if (uniqueTypes.length < 2) return null
-  const colors = uniqueTypes.map((t) => FRONT_COLORS[t] || '#f1efe8')
+  const palette = isDarkMode.value ? FRONT_COLORS_DARK : FRONT_COLORS
+  const fallback = isDarkMode.value ? '#252220' : '#f1efe8'
+  const colors = uniqueTypes.map((t) => palette[t] || fallback)
   return `linear-gradient(to right, ${colors[0]}, ${colors[colors.length - 1]})`
 }
 
@@ -185,6 +195,58 @@ onMounted(async () => {
 })
 
 const _sampleHistory: DayHistory[] = [
+  {
+    target_date: '2026-05-12',
+    forecasts: [
+      {
+        observed_at: '2026-05-10T08:00:00Z',
+        data: { front_type: 'warm_front', temp_min: '+13 °C', temp_max: '+22 °C' },
+      },
+      {
+        observed_at: '2026-05-11T08:00:00Z',
+        data: { front_type: 'no_front', temp_min: '+14 °C', temp_max: '+23 °C' },
+      },
+    ],
+  },
+  {
+    target_date: '2026-05-11',
+    forecasts: [
+      {
+        observed_at: '2026-05-09T08:00:00Z',
+        data: { front_type: 'cold_front', temp_min: '+8 °C', temp_max: '+16 °C' },
+      },
+      {
+        observed_at: '2026-05-10T08:00:00Z',
+        data: { front_type: 'warm_front', temp_min: '+11 °C', temp_max: '+19 °C' },
+      },
+      {
+        observed_at: '2026-05-11T06:00:00Z',
+        data: { front_type: 'warm_front', temp_min: '+12 °C', temp_max: '+20 °C' },
+      },
+    ],
+  },
+  {
+    target_date: '2026-05-10',
+    forecasts: [
+      {
+        observed_at: '2026-05-09T08:00:00Z',
+        data: { front_type: 'cold_front', temp_min: '+6 °C', temp_max: '+14 °C' },
+      },
+      {
+        observed_at: '2026-05-10T08:00:00Z',
+        data: { front_type: 'cold_front', temp_min: '+7 °C', temp_max: '+15 °C' },
+      },
+    ],
+  },
+  {
+    target_date: '2026-05-09',
+    forecasts: [
+      {
+        observed_at: '2026-05-08T08:00:00Z',
+        data: { front_type: 'stationary_front', temp_min: '+9 °C', temp_max: '+17 °C' },
+      },
+    ],
+  },
   {
     target_date: '2026-05-02',
     forecasts: [
@@ -860,19 +922,34 @@ onUpdated(() => {
 
 let _mq: MediaQueryList | null = null
 let _mqHandler: ((e: MediaQueryListEvent) => void) | null = null
+let _dmq: MediaQueryList | null = null
+let _dmqHandler: ((e: MediaQueryListEvent) => void) | null = null
 
 onMounted(() => {
+  // Belt-and-suspenders: also apply body class in onMounted in case watch+immediate
+  // didn't fire (e.g. HMR restore) — keeps teleported popover styled correctly
+  document.body.classList.toggle('is-dark', isDarkMode.value)
+  console.log('[ForecastHistory] isDarkMode:', isDarkMode.value, '— body.is-dark:', document.body.classList.contains('is-dark'))
+
   window.addEventListener('resize', checkTempWidths)
+  window.addEventListener('resize', updateSlideHeight)
   _mq = window.matchMedia('(min-width: 768px)')
   isDesktop.value = _mq.matches
-  _mqHandler = (e) => {
-    isDesktop.value = e.matches
-  }
+  _mqHandler = (e) => { isDesktop.value = e.matches; updateSlideHeight() }
   _mq.addEventListener('change', _mqHandler)
+
+  _dmq = window.matchMedia('(prefers-color-scheme: dark)')
+  _dmqHandler = (e) => { isDarkMode.value = e.matches }
+  _dmq.addEventListener('change', _dmqHandler)
+
+  updateSlideHeight()
 })
 onUnmounted(() => {
   window.removeEventListener('resize', checkTempWidths)
+  window.removeEventListener('resize', updateSlideHeight)
   if (_mq && _mqHandler) _mq.removeEventListener('change', _mqHandler)
+  if (_dmq && _dmqHandler) _dmq.removeEventListener('change', _dmqHandler)
+  document.body.classList.remove('is-dark')
 })
 
 // Split into recent (≤7 days) and old (>7 days)
@@ -913,6 +990,32 @@ function isoWeekday(dateStr: string) {
 // ── Desktop / mobile detection ──
 const isDesktop = ref(false)
 
+// ── Slide-wrap height (animates between months with different row counts) ──
+const calSlideWrapRef = ref<{ $el: HTMLElement } | null>(null)
+const slideWrapHeight = ref<number | null>(null)
+
+async function updateSlideHeight() {
+  if (isDesktop.value) { slideWrapHeight.value = null; return }
+  await nextTick()
+  const el = calSlideWrapRef.value?.$el
+  if (!el) return
+  // During a transition two .cal-month divs are present; the leaving one is
+  // position:absolute — we want the height of the entering (in-flow) one.
+  const months = el.querySelectorAll<HTMLElement>('.cal-month')
+  for (const m of Array.from(months)) {
+    if (getComputedStyle(m).position !== 'absolute') {
+      slideWrapHeight.value = m.offsetHeight
+      return
+    }
+  }
+}
+// Initialise synchronously so the correct theme class is present on first render
+const isDarkMode = ref(true) // TODO: revert — window.matchMedia('(prefers-color-scheme: dark)').matches
+// Keep document.body in sync — needed for the teleported cal-popover
+watch(isDarkMode, (dark) => {
+  document.body.classList.toggle('is-dark', dark)
+}, { immediate: true })
+
 // ── Month navigation (mobile single-month view) ──
 const currentMonthKey = ref(new Date().toLocaleDateString('en-CA').slice(0, 7))
 
@@ -937,8 +1040,8 @@ const calendarMonths = computed(() => {
         const dateStr = `${key}-${String(day).padStart(2, '0')}`
         flat.push({ date: dateStr, entry: byDate[dateStr] ?? null })
       }
-      // Always pad to exactly 6 rows (42 cells) so height never changes between months
-      while (flat.length < 42) flat.push({ date: null, entry: null })
+      // Pad to the end of the last needed week only (no trailing blank row)
+      while (flat.length % 7 !== 0) flat.push({ date: null, entry: null })
       return { key, year: y, month: m, label: `${y}. ${HU_MONTHS[m - 1]}`, grid: flat }
     })
 })
@@ -950,7 +1053,11 @@ watch(calendarMonths, (months) => {
     const thisMonth = new Date().toLocaleDateString('en-CA').slice(0, 7)
     currentMonthKey.value = keys.includes(thisMonth) ? thisMonth : keys[0]
   }
+  updateSlideHeight()
 })
+
+// Re-measure height whenever the displayed month changes
+watch(currentMonthKey, () => { updateSlideHeight() })
 
 const availableKeys = computed(
   () =>
@@ -1007,7 +1114,12 @@ function onCalTouchEnd(e: TouchEvent) {
 </script>
 
 <template>
-  <div class="forecast-history">
+  <div class="forecast-history" :class="{ 'is-dark': isDarkMode }">
+    <button
+      class="theme-toggle"
+      :title="isDarkMode ? 'Világos mód' : 'Sötét mód'"
+      @click="isDarkMode = !isDarkMode"
+    >◑</button>
     <div v-if="loading" class="state-msg">Loading…</div>
     <div v-else-if="error" class="state-msg state-error">{{ error }}</div>
     <!-- ── Recent days: full cards ── -->
@@ -1094,10 +1206,12 @@ function onCalTouchEnd(e: TouchEvent) {
     <!-- ── All data: calendar view ── -->
     <TransitionGroup
       v-if="calendarMonths.length"
+      ref="calSlideWrapRef"
       :name="isDesktop ? '' : 'cal-slide-' + slideDirection"
       tag="div"
       class="cal-section"
       :class="{ 'cal-section--annual': isDesktop, 'cal-slide-wrap': !isDesktop }"
+      :style="!isDesktop && slideWrapHeight ? { height: slideWrapHeight + 'px' } : {}"
       @touchstart="onCalTouchStart"
       @touchend="onCalTouchEnd"
     >
@@ -1232,6 +1346,46 @@ function onCalTouchEnd(e: TouchEvent) {
   padding: 0 1.5rem;
 }
 
+/* ── Theme toggle (fixed bottom-right) ── */
+.theme-toggle {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  z-index: 100;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(120, 120, 120, 0.25);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.2s, box-shadow 0.2s;
+  color: #444;
+  user-select: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.theme-toggle:hover {
+  opacity: 1;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+}
+.theme-toggle:active {
+  opacity: 1;
+  transform: scale(0.95);
+}
+.is-dark .theme-toggle {
+  background: rgba(40, 40, 40, 0.75);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #ccc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
 /* ── History divider ── */
 .history-divider {
   display: flex;
@@ -1340,6 +1494,7 @@ function onCalTouchEnd(e: TouchEvent) {
 .cal-slide-wrap {
   position: relative;
   overflow: hidden;
+  transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .cal-slide-left-enter-active,
@@ -2054,4 +2209,111 @@ function onCalTouchEnd(e: TouchEvent) {
 .tl-sep {
   color: #ddd;
 }
+
+/* ── Dark theme ──
+   Driven by the .is-dark class set on both the component root and document.body
+   (body class is needed for the teleported cal-popover).
+   isDarkMode ref mirrors prefers-color-scheme via matchMedia so OS dark mode
+   is still respected; the class just makes it testable without the media query.
+*/
+
+/* Divider */
+.is-dark .history-divider::before,
+.is-dark .history-divider::after { background: rgba(255, 255, 255, 0.1); }
+.is-dark .history-divider-label  { color: #78716c; }
+
+/* Calendar month card */
+.is-dark .cal-month        { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.1); }
+.is-dark .cal-month-label  { color: #a8a29e; }
+.is-dark .cal-weekday-header { color: #57534e; }
+
+/* Nav */
+.is-dark .cal-nav-label              { color: #d6d3d1; }
+.is-dark .cal-nav-btn                { color: #78716c; }
+.is-dark .cal-nav-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.06); }
+.is-dark .cal-nav-btn:disabled       { color: #44403c; }
+
+/* Cells */
+.is-dark .cal-cell          { border-color: rgba(255, 255, 255, 0.08); }
+.is-dark .cal-cell:hover    { border-color: rgba(255, 255, 255, 0.22); }
+.is-dark .cal-cell--empty   { border-color: transparent; }
+.is-dark .cal-cell--future  { border-color: rgba(255, 255, 255, 0.05); }
+.is-dark .cal-cell--no-data .cal-day-num { color: rgba(255, 255, 255, 0.18); }
+.is-dark .cal-day-num       { color: #a8a29e; }
+.is-dark .cal-cell--in-stack { outline-color: rgba(255, 255, 255, 0.14); }
+.is-dark .cal-cell--today .cal-day-num {
+  background: rgba(255, 255, 255, 0.82);
+  color: #1c1917;
+}
+.is-dark .cal-cell--tomorrow .cal-day-num { border-color: rgba(255, 255, 255, 0.25); color: #a8a29e; }
+.is-dark .cal-cell--selected { outline-color: rgba(255, 255, 255, 0.4); }
+
+/* Card cell & day-card backgrounds */
+.is-dark .card-cold       { background: #1a2e42; border-color: #2d4f6e; }
+.is-dark .card-warm       { background: #2d1a1a; border-color: #5c2626; }
+.is-dark .card-no         { background: #252220; border-color: #3d3a37; }
+.is-dark .card-stationary { background: #2e1e0a; border-color: #5c3a14; }
+.is-dark .card-double     { background: #211a38; border-color: #3f2d6b; }
+
+/* Front type pills */
+.is-dark .front-cold       { background: #1e3a5a; color: #93c5fd; }
+.is-dark .front-warm       { background: #3b1a1a; color: #fca5a5; }
+.is-dark .front-no         { background: #2e2b27; color: #d6d3d1; }
+.is-dark .front-stationary { background: #3b2008; color: #fdba74; }
+.is-dark .front-double     { background: #2d1f52; color: #c4b5fd; }
+.is-dark .front-mixed      { background: rgba(255, 255, 255, 0.08); color: #d6d3d1; }
+
+/* Dots */
+.is-dark .dot-cold       { background: #60a5fa; border-color: #60a5fa; }
+.is-dark .dot-warm       { background: #f87171; border-color: #f87171; }
+.is-dark .dot-no         { background: #a8a29e; border-color: #a8a29e; }
+.is-dark .dot-stationary { background: #fb923c; border-color: #fb923c; }
+.is-dark .dot-double     { background: #a78bfa; border-color: #a78bfa; }
+
+/* Cal change dot */
+.is-dark .cal-change-dot { background: rgba(255, 255, 255, 0.35); }
+
+/* Popover (teleported to body — body.is-dark is the ancestor) */
+.is-dark .cal-popover {
+  background: #1c1917;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+.is-dark .cal-popover-date     { color: #78716c; }
+.is-dark .cal-popover-temp     { color: #d6d3d1; }
+.is-dark .cal-popover-close    { color: #57534e; }
+.is-dark .cal-popover-close:hover { color: #a8a29e; }
+.is-dark .cal-popover-timeline { border-top-color: rgba(255, 255, 255, 0.07); }
+.is-dark .cal-popover-no-changes { color: #57534e; }
+
+/* Timeline */
+.is-dark .timeline-row           { border-top-color: rgba(255, 255, 255, 0.06); }
+.is-dark .timeline-row--connected::after { background: rgba(255, 255, 255, 0.12); }
+.is-dark .tl-time  { color: #78716c; }
+.is-dark .tl-from  { color: #78716c; }
+.is-dark .tl-arrow { color: #57534e; }
+.is-dark .tl-to    { color: #d6d3d1; }
+.is-dark .tl-sep   { color: #44403c; }
+.is-dark .tl-label { color: #a8a29e; }
+
+/* Calendar extras */
+.is-dark .cal-temp      { color: #78716c; }
+.is-dark .cal-dot       { background: rgba(255, 255, 255, 0.15); }
+.is-dark .cal-dot--active { background: rgba(255, 255, 255, 0.65); }
+
+/* ── Recent day cards ── */
+.is-dark .day-card                    { border-color: rgba(255, 255, 255, 0.10); }
+.is-dark .day-card--today             { border-color: rgba(255, 255, 255, 0.70); box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4); }
+.is-dark .day-card--gradient.day-card--today { border-color: rgba(255, 255, 255, 0.25); }
+.is-dark .day-card--tomorrow          { border-color: rgba(255, 255, 255, 0.25); }
+.is-dark .day-card--has-history       { box-shadow: inset 0 -3px 0 rgba(255, 255, 255, 0.07); }
+
+/* Badges & text */
+.is-dark .today-badge    { background: rgba(255, 255, 255, 0.88); color: #1c1917; }
+.is-dark .tomorrow-badge { color: #78716c; border-color: rgba(255, 255, 255, 0.2); }
+.is-dark .yesterday-badge { color: #d6d3d1; }
+.is-dark .day-weekday   { color: #d6d3d1; }
+.is-dark .day-date       { color: #78716c; }
+.is-dark .weather-temp   { color: #d6d3d1; }
+.is-dark .card-right     { border-color: rgba(255, 255, 255, 0.08); }
 </style>
