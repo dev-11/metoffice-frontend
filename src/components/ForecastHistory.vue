@@ -2359,19 +2359,19 @@ function onCalTouchEnd(e: TouchEvent) {
 .is-dark .cal-cell--selected { outline-color: rgba(255, 255, 255, 0.4); }
 
 /* Card cell & day-card backgrounds */
-.is-dark .card-cold       { background: #1a2e42; border-color: #2d4f6e; }
-.is-dark .card-warm       { background: #2d1a1a; border-color: #5c2626; }
-.is-dark .card-no         { background: #252220; border-color: #3d3a37; }
-.is-dark .card-stationary { background: #2e1e0a; border-color: #5c3a14; }
-.is-dark .card-double     { background: #211a38; border-color: #3f2d6b; }
+.is-dark .card-cold       { background: #223850; border-color: #3a6080; }
+.is-dark .card-warm       { background: #3e2424; border-color: #6e3838; }
+.is-dark .card-no         { background: #302d2a; border-color: #504c48; }
+.is-dark .card-stationary { background: #3c2a10; border-color: #6e4e20; }
+.is-dark .card-double     { background: #2c2248; border-color: #503880; }
 
 /* Front type pills */
-.is-dark .front-cold       { background: #1e3a5a; color: #93c5fd; }
-.is-dark .front-warm       { background: #3b1a1a; color: #fca5a5; }
-.is-dark .front-no         { background: #2e2b27; color: #d6d3d1; }
-.is-dark .front-stationary { background: #3b2008; color: #fdba74; }
-.is-dark .front-double     { background: #2d1f52; color: #c4b5fd; }
-.is-dark .front-mixed      { background: rgba(255, 255, 255, 0.08); color: #d6d3d1; }
+.is-dark .front-cold       { background: #2a4e72; color: #93c5fd; }
+.is-dark .front-warm       { background: #4e2828; color: #fca5a5; }
+.is-dark .front-no         { background: #3e3b37; color: #d6d3d1; }
+.is-dark .front-stationary { background: #4e3010; color: #fdba74; }
+.is-dark .front-double     { background: #3c2c6e; color: #c4b5fd; }
+.is-dark .front-mixed      { background: rgba(255, 255, 255, 0.12); color: #d6d3d1; }
 
 /* Dots */
 .is-dark .dot-cold       { background: #60a5fa; border-color: #60a5fa; }
