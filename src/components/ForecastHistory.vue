@@ -177,9 +177,22 @@ const LOADING_TEXTS = [
   'Almost there, probably…',
 ]
 const loadingEmojiIdx = ref(0)
+const loadingOrder = ref<number[]>([])
+
+function shuffleLoadingOrder() {
+  const indices = Array.from({ length: LOADING_EMOJIS.length }, (_, i) => i)
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[indices[i], indices[j]] = [indices[j], indices[i]]
+  }
+  return indices
+}
+
 let _loadingInterval: ReturnType<typeof setInterval> | null = null
 watch(loading, (isLoading) => {
   if (isLoading) {
+    loadingOrder.value = shuffleLoadingOrder()
+    loadingEmojiIdx.value = 0
     _loadingInterval = setInterval(() => {
       loadingEmojiIdx.value = (loadingEmojiIdx.value + 1) % LOADING_EMOJIS.length
     }, 2200)
@@ -1164,10 +1177,10 @@ function onCalTouchEnd(e: TouchEvent) {
     >◑</button>
     <div v-if="loading" class="state-msg state-loading">
       <Transition name="weather-emoji" mode="out-in">
-        <span :key="loadingEmojiIdx" class="loading-emoji">{{ LOADING_EMOJIS[loadingEmojiIdx] }}</span>
+        <span :key="loadingEmojiIdx" class="loading-emoji">{{ LOADING_EMOJIS[loadingOrder[loadingEmojiIdx]] }}</span>
       </Transition>
       <Transition name="weather-emoji" mode="out-in">
-        <span :key="loadingEmojiIdx" class="loading-text">{{ LOADING_TEXTS[loadingEmojiIdx] }}</span>
+        <span :key="loadingEmojiIdx" class="loading-text">{{ LOADING_TEXTS[loadingOrder[loadingEmojiIdx]] }}</span>
       </Transition>
     </div>
     <div v-else-if="error" class="state-msg state-error">{{ error }}</div>
