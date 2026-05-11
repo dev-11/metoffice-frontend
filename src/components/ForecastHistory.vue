@@ -1486,7 +1486,7 @@ function onCalTouchEnd(e: TouchEvent) {
 .cal-cell {
   aspect-ratio: 1;
   border-radius: 6px;
-  border: 0.5px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
