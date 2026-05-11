@@ -1519,9 +1519,12 @@ function onCalTouchEnd(e: TouchEvent) {
 
 .cal-cell--future {
   background: transparent;
-  border-color: transparent;
-  opacity: 0.35;
+  border-color: rgba(0, 0, 0, 0.06);
   cursor: default;
+}
+
+.cal-cell--future .cal-day-num {
+  opacity: 0.35;
 }
 
 .cal-cell--in-stack {
