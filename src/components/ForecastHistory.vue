@@ -161,6 +161,32 @@ function fmtShortDate(dateStr: string) {
 const history = ref<DayHistory[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
+
+const LOADING_EMOJIS = ['☀️', '🌤️', '⛅', '🌥️', '🌦️', '🌧️', '⛈️', '🌨️', '❄️', '🌬️', '🌈']
+const LOADING_TEXTS = [
+  'Licking a finger and holding it up…',
+  'Bribing a seagull for info…',
+  'Asking the barometer nicely…',
+  'Checking if cows are sitting…',
+  'Consulting the clouds…',
+  'Counting raindrops…',
+  'Interrogating a groundhog…',
+  'Waiting for the fog to lift…',
+  'Reading the frost patterns…',
+  'Watching which way the smoke goes…',
+  'Almost there, probably…',
+]
+const loadingEmojiIdx = ref(0)
+let _loadingInterval: ReturnType<typeof setInterval> | null = null
+watch(loading, (isLoading) => {
+  if (isLoading) {
+    _loadingInterval = setInterval(() => {
+      loadingEmojiIdx.value = (loadingEmojiIdx.value + 1) % LOADING_EMOJIS.length
+    }, 2200)
+  } else {
+    if (_loadingInterval) { clearInterval(_loadingInterval); _loadingInterval = null }
+  }
+}, { immediate: true })
 const expandedDays = ref<Record<string, boolean>>({})
 
 onMounted(async () => {
@@ -954,6 +980,7 @@ onUnmounted(() => {
   window.removeEventListener('resize', updateSlideHeight)
   if (_mq && _mqHandler) _mq.removeEventListener('change', _mqHandler)
   if (_dmq && _dmqHandler) _dmq.removeEventListener('change', _dmqHandler)
+  if (_loadingInterval) { clearInterval(_loadingInterval); _loadingInterval = null }
   document.body.classList.remove('is-dark')
 })
 
@@ -1135,7 +1162,14 @@ function onCalTouchEnd(e: TouchEvent) {
       :title="isDarkMode ? 'Világos mód' : 'Sötét mód'"
       @click="toggleTheme"
     >◑</button>
-    <div v-if="loading" class="state-msg">Loading…</div>
+    <div v-if="loading" class="state-msg state-loading">
+      <Transition name="weather-emoji" mode="out-in">
+        <span :key="loadingEmojiIdx" class="loading-emoji">{{ LOADING_EMOJIS[loadingEmojiIdx] }}</span>
+      </Transition>
+      <Transition name="weather-emoji" mode="out-in">
+        <span :key="loadingEmojiIdx" class="loading-text">{{ LOADING_TEXTS[loadingEmojiIdx] }}</span>
+      </Transition>
+    </div>
     <div v-else-if="error" class="state-msg state-error">{{ error }}</div>
     <!-- ── Recent days: full cards ── -->
     <div
@@ -1870,6 +1904,54 @@ function onCalTouchEnd(e: TouchEvent) {
   padding: 2rem;
   color: #888;
   font-size: 14px;
+}
+
+.state-loading {
+  padding: 4rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  overflow: hidden;
+}
+
+.loading-emoji {
+  font-size: 2rem;
+  display: block;
+  line-height: 1;
+}
+
+.loading-text {
+  font-size: 13px;
+  color: #aaa;
+  display: block;
+  text-align: center;
+}
+
+.is-dark .loading-text {
+  color: #666;
+}
+
+.weather-emoji-enter-active,
+.weather-emoji-leave-active {
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.weather-emoji-enter-from {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+.weather-emoji-enter-to {
+  opacity: 1;
+  transform: translateX(0);
+}
+.weather-emoji-leave-from {
+  opacity: 1;
+  transform: translateX(0);
+}
+.weather-emoji-leave-to {
+  opacity: 0;
+  transform: translateX(20px);
 }
 
 .state-error {
