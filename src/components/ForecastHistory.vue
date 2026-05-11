@@ -1026,6 +1026,11 @@ watch(isDarkMode, (dark) => {
   document.body.classList.toggle('is-dark', dark)
 }, { immediate: true })
 
+function toggleTheme() {
+  isDarkMode.value = !isDarkMode.value
+  localStorage.setItem('theme', isDarkMode.value ? 'dark' : 'light')
+}
+
 // ── Month navigation (mobile single-month view) ──
 const currentMonthKey = ref(new Date().toLocaleDateString('en-CA').slice(0, 7))
 
@@ -1128,7 +1133,7 @@ function onCalTouchEnd(e: TouchEvent) {
     <button
       class="theme-toggle"
       :title="isDarkMode ? 'Világos mód' : 'Sötét mód'"
-      @click="isDarkMode = !isDarkMode; localStorage.setItem('theme', isDarkMode ? 'dark' : 'light')"
+      @click="toggleTheme"
     >◑</button>
     <div v-if="loading" class="state-msg">Loading…</div>
     <div v-else-if="error" class="state-msg state-error">{{ error }}</div>
