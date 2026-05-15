@@ -2358,12 +2358,12 @@ function onCalTouchEnd(e: TouchEvent) {
 .is-dark .cal-cell--tomorrow .cal-day-num { border-color: rgba(255, 255, 255, 0.25); color: #a8a29e; }
 .is-dark .cal-cell--selected { outline-color: rgba(255, 255, 255, 0.4); }
 
-/* Card cell & day-card backgrounds */
-.is-dark .card-cold       { background: #223850; border-color: #3a6080; }
-.is-dark .card-warm       { background: #5c2e2e; border-color: #8c4444; }
-.is-dark .card-no         { background: #302d2a; border-color: #504c48; }
-.is-dark .card-stationary { background: #3c2a10; border-color: #6e4e20; }
-.is-dark .card-double     { background: #2c2248; border-color: #503880; }
+/* Card cell & day-card backgrounds — all normalised to L≈27% */
+.is-dark .card-cold       { background: #2d4d6a; border-color: #3a6080; }
+.is-dark .card-warm       { background: #5c2e2e; border-color: #7a3c3c; }
+.is-dark .card-no         { background: #454240; border-color: #666260; }
+.is-dark .card-stationary { background: #6a4a1a; border-color: #8a6228; }
+.is-dark .card-double     { background: #3a2c60; border-color: #503880; }
 
 /* Front type pills */
 .is-dark .front-cold       { background: #2a4e72; color: #93c5fd; }
