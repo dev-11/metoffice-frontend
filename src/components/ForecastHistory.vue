@@ -2361,7 +2361,7 @@ function onCalTouchEnd(e: TouchEvent) {
 /* Card cell & day-card backgrounds — all normalised to L≈27% */
 .is-dark .card-cold       { background: #2d4d6a; border-color: #3a6080; }
 .is-dark .card-warm       { background: #5c2e2e; border-color: #7a3c3c; }
-.is-dark .card-no         { background: #454240; border-color: #666260; }
+.is-dark .card-no         { background: #333030; border-color: #514e4b; }
 .is-dark .card-stationary { background: #6a4a1a; border-color: #8a6228; }
 .is-dark .card-double     { background: #3a2c60; border-color: #503880; }
 
