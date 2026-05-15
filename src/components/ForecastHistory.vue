@@ -1142,17 +1142,20 @@ const slideDirection = ref<'left' | 'right'>('left')
 
 function prevMonth() {
   if (canGoPrev.value) {
+    closeCalPopover()
     slideDirection.value = 'right'
     currentMonthKey.value = availableKeys.value[currentMonthIdx.value - 1]
   }
 }
 function nextMonth() {
   if (canGoNext.value) {
+    closeCalPopover()
     slideDirection.value = 'left'
     currentMonthKey.value = availableKeys.value[currentMonthIdx.value + 1]
   }
 }
 function jumpToMonth(key: string) {
+  closeCalPopover()
   slideDirection.value = key > currentMonthKey.value ? 'left' : 'right'
   currentMonthKey.value = key
 }
