@@ -915,7 +915,7 @@ const selectedCalDay = computed(() =>
     : null,
 )
 
-function openCalPopover(event: MouseEvent, dateStr: string) {
+async function openCalPopover(event: MouseEvent, dateStr: string) {
   if (selectedCalDate.value === dateStr) {
     selectedCalDate.value = null
     return
@@ -933,6 +933,19 @@ function openCalPopover(event: MouseEvent, dateStr: string) {
     width: popoverWidth,
   }
   selectedCalDate.value = dateStr
+
+  // After render, flip above the cell if the popover overflows the viewport bottom
+  await nextTick()
+  const popoverEl = document.querySelector<HTMLElement>('.cal-popover')
+  if (popoverEl) {
+    const popoverHeight = popoverEl.offsetHeight
+    if (calPopoverPos.value.top + popoverHeight > window.innerHeight - 8) {
+      calPopoverPos.value = {
+        ...calPopoverPos.value,
+        top: Math.max(8, cellRect.top - popoverHeight - 8),
+      }
+    }
+  }
 }
 
 function closeCalPopover() {
