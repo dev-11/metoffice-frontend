@@ -174,7 +174,7 @@ const LOADING_TEXTS = [
   'Waiting for the fog to lift…',
   'Reading the frost patterns…',
   'Watching which way the smoke goes…',
-  'Almost there, probably…',
+  'Chasing rainbows for your forecast…',
 ]
 const loadingEmojiIdx = ref(0)
 const loadingOrder = ref<number[]>([])
