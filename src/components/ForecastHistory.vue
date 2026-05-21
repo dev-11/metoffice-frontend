@@ -2033,7 +2033,6 @@ function onCalTouchEnd(e: TouchEvent) {
 
 .day-card--today.day-card--kissed {
   transform: scale(1.018);
-  box-shadow: 0 6px 28px rgba(225, 29, 72, 0.35), 0 0 0 2px rgba(225, 29, 72, 0.45);
 }
 
 .kiss-zone {
