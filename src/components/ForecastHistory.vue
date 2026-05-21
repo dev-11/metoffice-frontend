@@ -79,7 +79,7 @@ const FRONT_COLORS_DARK: Record<string, string> = {
 
 const FRONT_STYLES: Record<
   string,
-  { pill: string; dot: string; label: string; short: string; card: string }
+  { pill: string; dot: string; label: string; short: string; card: string; emoji: string }
 > = {
   cold_front: {
     pill: 'front-cold',
@@ -87,6 +87,7 @@ const FRONT_STYLES: Record<
     label: 'Hidegfront',
     short: 'Hidegfront',
     card: 'card-cold',
+    emoji: '🤕',
   },
   warm_front: {
     pill: 'front-warm',
@@ -94,6 +95,7 @@ const FRONT_STYLES: Record<
     label: 'Melegfront',
     short: 'Melegfront',
     card: 'card-warm',
+    emoji: '🥵',
   },
   no_front: {
     pill: 'front-no',
@@ -101,6 +103,7 @@ const FRONT_STYLES: Record<
     label: 'Nincs front',
     short: 'Nincs front',
     card: 'card-no',
+    emoji: '😌',
   },
   stationary_front: {
     pill: 'front-stationary',
@@ -108,6 +111,7 @@ const FRONT_STYLES: Record<
     label: 'Stacionárius front',
     short: 'Stacionárius',
     card: 'card-stationary',
+    emoji: '😮‍💨',
   },
   double_front: {
     pill: 'front-double',
@@ -115,6 +119,7 @@ const FRONT_STYLES: Record<
     label: 'Kettős front',
     short: 'Kettős front',
     card: 'card-double',
+    emoji: '🤯',
   },
 }
 
@@ -133,7 +138,7 @@ function cardBackground(day: DayHistory) {
 
 function frontStyle(ft: string) {
   return (
-    FRONT_STYLES[ft] || { pill: 'front-no', dot: 'dot-no', label: ft, short: ft, card: 'card-no' }
+    FRONT_STYLES[ft] || { pill: 'front-no', dot: 'dot-no', label: ft, short: ft, card: 'card-no', emoji: '' }
   )
 }
 
@@ -1205,6 +1210,7 @@ function onCalTouchEnd(e: TouchEvent) {
       v-for="day in recentDays"
       :key="day.target_date"
       class="day-card"
+      :data-emoji="day.style.emoji"
       :class="[
         day.bg ? 'day-card--gradient' : day.style.card,
         {
@@ -1234,9 +1240,7 @@ function onCalTouchEnd(e: TouchEvent) {
             </div>
             <span class="day-date">{{ fmtShortDate(day.target_date) }}</span>
           </div>
-          <span class="front-pill" :class="day.bg ? 'front-mixed' : day.style.pill">{{
-            day.style.label
-          }}</span>
+          <span class="front-pill" :class="day.bg ? 'front-mixed' : day.style.pill">{{ day.style.label }}</span>
           <div v-if="day.temp_min && day.temp_max" class="weather-col">
             <span class="weather-temp">{{ day.temp_min }} / {{ day.temp_max }}</span>
           </div>
@@ -1988,10 +1992,24 @@ function onCalTouchEnd(e: TouchEvent) {
 }
 
 .day-card {
+  position: relative;
+  overflow: hidden;
   border: 0.5px solid rgba(0, 0, 0, 0.12);
   border-radius: 12px;
   padding: 1rem 1.25rem;
   margin-bottom: 1rem;
+}
+
+.day-card::after {
+  content: attr(data-emoji);
+  position: absolute;
+  right: -0.1em;
+  top: -0.2em;
+  font-size: 4rem;
+  line-height: 1;
+  opacity: 0.15;
+  pointer-events: none;
+  user-select: none;
 }
 
 .day-card--today {
@@ -2223,6 +2241,7 @@ function onCalTouchEnd(e: TouchEvent) {
   flex-shrink: 0;
 }
 
+
 .weather-temp {
   font-size: 18px;
   font-weight: 600;
@@ -2429,6 +2448,7 @@ function onCalTouchEnd(e: TouchEvent) {
 
 /* ── Recent day cards ── */
 .is-dark .day-card                    { border-color: rgba(255, 255, 255, 0.10); }
+.is-dark .day-card::after             { opacity: 0.25; }
 .is-dark .day-card--today             { border-color: rgba(255, 255, 255, 0.70); box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4); }
 .is-dark .day-card--gradient.day-card--today { border-color: rgba(255, 255, 255, 0.25); }
 .is-dark .day-card--tomorrow          { border-color: rgba(255, 255, 255, 0.25); }
