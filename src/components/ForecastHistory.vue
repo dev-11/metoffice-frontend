@@ -207,6 +207,16 @@ watch(loading, (isLoading) => {
 }, { immediate: true })
 const expandedDays = ref<Record<string, boolean>>({})
 
+const kissActive = ref(false)
+const cardPulse = ref(false)
+function sendKiss() {
+  if (kissActive.value) return
+  kissActive.value = true
+  cardPulse.value = true
+  setTimeout(() => { kissActive.value = false }, 1100)
+  setTimeout(() => { cardPulse.value = false }, 500)
+}
+
 onMounted(async () => {
   try {
     const { data } = await axios.get(`${import.meta.env.VITE_API_BASE}/b/metoffice`)
@@ -1217,10 +1227,15 @@ function onCalTouchEnd(e: TouchEvent) {
           'day-card--today': day.isToday,
           'day-card--tomorrow': day.isTomorrow,
           'day-card--has-history': day.hasOnDayChanges,
+          'day-card--kissed': day.isToday && cardPulse,
         },
       ]"
       :style="day.bg ? { background: day.bg } : {}"
     >
+      <template v-if="day.isToday">
+        <span class="kiss-zone" @click.stop="sendKiss" />
+        <span v-if="kissActive" class="kiss-fly">😘</span>
+      </template>
       <div class="card-body" :class="{ 'no-history': !day.hasOnDayChanges }">
         <div
           class="card-left"
@@ -2013,6 +2028,45 @@ function onCalTouchEnd(e: TouchEvent) {
 }
 
 .day-card--today {
+  transition: transform 0.4s ease-out, box-shadow 0.4s ease-out;
+}
+
+.day-card--today.day-card--kissed {
+  transform: scale(1.018);
+  box-shadow: 0 6px 28px rgba(225, 29, 72, 0.35), 0 0 0 2px rgba(225, 29, 72, 0.45);
+}
+
+.kiss-zone {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 72px;
+  height: 72px;
+  z-index: 2;
+  cursor: default;
+}
+
+.kiss-fly {
+  position: absolute;
+  top: -0.2em;
+  right: -0.1em;
+  font-size: 4rem;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  z-index: 3;
+  animation: kiss-pop 1s ease-out forwards;
+}
+
+@keyframes kiss-pop {
+  0%   { transform: scale(0);   opacity: 0; }
+  30%  { transform: scale(1.4); opacity: 1; }
+  65%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1);   opacity: 0; }
+}
+
+
+.day-card--today {
   border: 2px solid #44403c;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
@@ -2031,7 +2085,9 @@ function onCalTouchEnd(e: TouchEvent) {
   color: #fff;
   padding: 4px 12px;
   border-radius: 20px;
+  transition: background 0.2s ease, transform 0.15s ease;
 }
+
 
 .tomorrow-badge {
   font-size: 22px;
