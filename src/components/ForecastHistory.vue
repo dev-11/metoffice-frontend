@@ -207,6 +207,55 @@ watch(loading, (isLoading) => {
 }, { immediate: true })
 const expandedDays = ref<Record<string, boolean>>({})
 
+// ── Special day watermark overrides ──────────────────────────────────────────
+const SPECIAL_DAYS: Record<string, string> = {
+  '01-01': '🎆', // New Year's Day
+  '02-02': '🐻', // Groundhog Day
+  '02-14': '💌', // Valentine's Day
+  '03-01': '🌸', // Spring begins (meteorological)
+  '03-20': '🌸', // Spring equinox
+  '04-01': '🤡', // April Fools'
+  '06-01': '☀️', // Summer begins (meteorological)
+  '06-21': '☀️', // Summer solstice
+  '09-01': '🍂', // Autumn begins (meteorological)
+  '09-23': '🍂', // Autumn equinox
+  '10-31': '🎃', // Halloween
+  '11-11': '🪶', // Márton-nap
+  '12-01': '❄️', // Winter begins (meteorological)
+  '12-06': '🎅', // Mikulás
+  '12-21': '❄️', // Winter solstice
+  '12-24': '🎄', // Christmas Eve
+  '12-25': '🎄', // Christmas Day
+  '12-26': '🎄', // Christmas 2nd day
+  '12-31': '🥂', // New Year's Eve
+}
+
+function easterSundayMMDD(year: number): string {
+  const a = year % 19, b = Math.floor(year / 100), c = year % 100
+  const d = Math.floor(b / 4), e = b % 4
+  const f = Math.floor((b + 8) / 25)
+  const g = Math.floor((b - f + 1) / 3)
+  const h = (19 * a + b - d - g + 15) % 30
+  const i = Math.floor(c / 4), k = c % 4
+  const l = (32 + 2 * e + 2 * i - h - k) % 7
+  const m = Math.floor((a + 11 * h + 22 * l) / 451)
+  const month = Math.floor((h + l - 7 * m + 114) / 31)
+  const day = ((h + l - 7 * m + 114) % 31) + 1
+  return `${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+}
+
+function specialEmoji(dateStr: string): string {
+  const year = parseInt(dateStr.slice(0, 4))
+  const mmdd = dateStr.slice(5)
+  if (SPECIAL_DAYS[mmdd]) return SPECIAL_DAYS[mmdd]
+  const easter = easterSundayMMDD(year)
+  const [em, ed] = easter.split('-').map(Number)
+  const easterMon = new Date(year, em - 1, ed + 1)
+  const easterMonMMDD = `${String(easterMon.getMonth() + 1).padStart(2, '0')}-${String(easterMon.getDate()).padStart(2, '0')}`
+  if (mmdd === easter || mmdd === easterMonMMDD) return '🐰'
+  return ''
+}
+
 const kissActive = ref(false)
 const cardPulse = ref(false)
 function sendKiss() {
@@ -1220,7 +1269,7 @@ function onCalTouchEnd(e: TouchEvent) {
       v-for="day in recentDays"
       :key="day.target_date"
       class="day-card"
-      :data-emoji="day.style.emoji"
+      :data-emoji="specialEmoji(day.target_date) || day.style.emoji"
       :class="[
         day.bg ? 'day-card--gradient' : day.style.card,
         {
