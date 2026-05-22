@@ -1232,10 +1232,7 @@ function onCalTouchEnd(e: TouchEvent) {
       ]"
       :style="day.bg ? { background: day.bg } : {}"
     >
-      <template v-if="day.isToday">
-        <span class="kiss-zone" @click.stop="sendKiss" />
-        <span v-if="kissActive" class="kiss-fly">😘</span>
-      </template>
+      <span v-if="kissActive" class="kiss-fly">😘</span>
       <div class="card-body" :class="{ 'no-history': !day.hasOnDayChanges }">
         <div
           class="card-left"
@@ -1249,7 +1246,7 @@ function onCalTouchEnd(e: TouchEvent) {
             <div class="card-title-row">
               <span v-if="day.isYesterday" class="yesterday-badge">Tegnap</span>
               <span v-else-if="day.isDayBeforeYesterday" class="day-weekday">Tegnapelőtt</span>
-              <span v-else-if="day.isToday" class="today-badge">Ma</span>
+              <span v-else-if="day.isToday" class="today-badge" @click.stop="sendKiss">Ma</span>
               <span v-else-if="day.isTomorrow" class="tomorrow-badge">Holnap</span>
               <span v-else class="day-weekday">{{ fmtWeekday(day.target_date) }}</span>
             </div>
@@ -2035,15 +2032,6 @@ function onCalTouchEnd(e: TouchEvent) {
   transform: scale(1.018);
 }
 
-.kiss-zone {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 72px;
-  height: 72px;
-  z-index: 2;
-  cursor: default;
-}
 
 .kiss-fly {
   position: absolute;
