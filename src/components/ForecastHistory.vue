@@ -1232,7 +1232,7 @@ function onCalTouchEnd(e: TouchEvent) {
       ]"
       :style="day.bg ? { background: day.bg } : {}"
     >
-      <span v-if="kissActive" class="kiss-fly">😘</span>
+      <span v-if="day.isToday && kissActive" class="kiss-fly">😘</span>
       <div class="card-body" :class="{ 'no-history': !day.hasOnDayChanges }">
         <div
           class="card-left"
