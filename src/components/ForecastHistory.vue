@@ -138,7 +138,14 @@ function cardBackground(day: DayHistory) {
 
 function frontStyle(ft: string) {
   return (
-    FRONT_STYLES[ft] || { pill: 'front-no', dot: 'dot-no', label: ft, short: ft, card: 'card-no', emoji: '' }
+    FRONT_STYLES[ft] || {
+      pill: 'front-no',
+      dot: 'dot-no',
+      label: ft,
+      short: ft,
+      card: 'card-no',
+      emoji: '',
+    }
   )
 }
 
@@ -194,17 +201,24 @@ function shuffleLoadingOrder() {
 }
 
 let _loadingInterval: ReturnType<typeof setInterval> | null = null
-watch(loading, (isLoading) => {
-  if (isLoading) {
-    loadingOrder.value = shuffleLoadingOrder()
-    loadingEmojiIdx.value = 0
-    _loadingInterval = setInterval(() => {
-      loadingEmojiIdx.value = (loadingEmojiIdx.value + 1) % LOADING_EMOJIS.length
-    }, 2200)
-  } else {
-    if (_loadingInterval) { clearInterval(_loadingInterval); _loadingInterval = null }
-  }
-}, { immediate: true })
+watch(
+  loading,
+  (isLoading) => {
+    if (isLoading) {
+      loadingOrder.value = shuffleLoadingOrder()
+      loadingEmojiIdx.value = 0
+      _loadingInterval = setInterval(() => {
+        loadingEmojiIdx.value = (loadingEmojiIdx.value + 1) % LOADING_EMOJIS.length
+      }, 2200)
+    } else {
+      if (_loadingInterval) {
+        clearInterval(_loadingInterval)
+        _loadingInterval = null
+      }
+    }
+  },
+  { immediate: true },
+)
 const expandedDays = ref<Record<string, boolean>>({})
 
 // ── Special day watermark overrides ──────────────────────────────────────────
@@ -213,17 +227,17 @@ const SPECIAL_DAYS: Record<string, string> = {
   '02-02': '🐻', // Groundhog Day
   '02-14': '💌', // Valentine's Day
   '03-01': '🌸', // Spring begins (meteorological)
-  '03-20': '🌸', // Spring equinox
+  '03-20': '🐝', // Spring equinox
   '04-01': '🤡', // April Fools'
-  '06-01': '☀️', // Summer begins (meteorological)
-  '06-21': '☀️', // Summer solstice
+  '06-01': '🏖️', // Summer begins (meteorological)
+  '06-21': '🌞', // Summer solstice
   '09-01': '🍂', // Autumn begins (meteorological)
-  '09-23': '🍂', // Autumn equinox
+  '09-23': '🦔', // Autumn equinox
   '10-31': '🎃', // Halloween
   '11-11': '🪶', // Márton-nap
-  '12-01': '❄️', // Winter begins (meteorological)
+  '12-01': '⛄️', // Winter begins (meteorological)
   '12-06': '🎅', // Mikulás
-  '12-21': '❄️', // Winter solstice
+  '12-21': '⭐️', // Winter solstice
   '12-24': '🎄', // Christmas Eve
   '12-25': '🎄', // Christmas Day
   '12-26': '🎄', // Christmas 2nd day
@@ -231,12 +245,16 @@ const SPECIAL_DAYS: Record<string, string> = {
 }
 
 function easterSundayMMDD(year: number): string {
-  const a = year % 19, b = Math.floor(year / 100), c = year % 100
-  const d = Math.floor(b / 4), e = b % 4
+  const a = year % 19,
+    b = Math.floor(year / 100),
+    c = year % 100
+  const d = Math.floor(b / 4),
+    e = b % 4
   const f = Math.floor((b + 8) / 25)
   const g = Math.floor((b - f + 1) / 3)
   const h = (19 * a + b - d - g + 15) % 30
-  const i = Math.floor(c / 4), k = c % 4
+  const i = Math.floor(c / 4),
+    k = c % 4
   const l = (32 + 2 * e + 2 * i - h - k) % 7
   const m = Math.floor((a + 11 * h + 22 * l) / 451)
   const month = Math.floor((h + l - 7 * m + 114) / 31)
@@ -262,8 +280,12 @@ function sendKiss() {
   if (kissActive.value) return
   kissActive.value = true
   cardPulse.value = true
-  setTimeout(() => { kissActive.value = false }, 1100)
-  setTimeout(() => { cardPulse.value = false }, 500)
+  setTimeout(() => {
+    kissActive.value = false
+  }, 1100)
+  setTimeout(() => {
+    cardPulse.value = false
+  }, 500)
 }
 
 onMounted(async () => {
@@ -1045,13 +1067,21 @@ onMounted(() => {
   // Belt-and-suspenders: also apply body class in onMounted in case watch+immediate
   // didn't fire (e.g. HMR restore) — keeps teleported popover styled correctly
   document.body.classList.toggle('is-dark', isDarkMode.value)
-  console.log('[ForecastHistory] isDarkMode:', isDarkMode.value, '— body.is-dark:', document.body.classList.contains('is-dark'))
+  console.log(
+    '[ForecastHistory] isDarkMode:',
+    isDarkMode.value,
+    '— body.is-dark:',
+    document.body.classList.contains('is-dark'),
+  )
 
   window.addEventListener('resize', checkTempWidths)
   window.addEventListener('resize', updateSlideHeight)
   _mq = window.matchMedia('(min-width: 768px)')
   isDesktop.value = _mq.matches
-  _mqHandler = (e) => { isDesktop.value = e.matches; updateSlideHeight() }
+  _mqHandler = (e) => {
+    isDesktop.value = e.matches
+    updateSlideHeight()
+  }
   _mq.addEventListener('change', _mqHandler)
 
   _dmq = window.matchMedia('(prefers-color-scheme: dark)')
@@ -1070,7 +1100,10 @@ onUnmounted(() => {
   window.removeEventListener('resize', updateSlideHeight)
   if (_mq && _mqHandler) _mq.removeEventListener('change', _mqHandler)
   if (_dmq && _dmqHandler) _dmq.removeEventListener('change', _dmqHandler)
-  if (_loadingInterval) { clearInterval(_loadingInterval); _loadingInterval = null }
+  if (_loadingInterval) {
+    clearInterval(_loadingInterval)
+    _loadingInterval = null
+  }
   document.body.classList.remove('is-dark')
 })
 
@@ -1117,7 +1150,10 @@ const calSlideWrapRef = ref<{ $el: HTMLElement } | null>(null)
 const slideWrapHeight = ref<number | null>(null)
 
 async function updateSlideHeight() {
-  if (isDesktop.value) { slideWrapHeight.value = null; return }
+  if (isDesktop.value) {
+    slideWrapHeight.value = null
+    return
+  }
   await nextTick()
   const el = calSlideWrapRef.value?.$el
   if (!el) return
@@ -1136,12 +1172,16 @@ const _storedTheme = localStorage.getItem('theme')
 const isDarkMode = ref(
   _storedTheme !== null
     ? _storedTheme === 'dark'
-    : window.matchMedia('(prefers-color-scheme: dark)').matches
+    : window.matchMedia('(prefers-color-scheme: dark)').matches,
 )
 // Keep document.body in sync — needed for the teleported cal-popover
-watch(isDarkMode, (dark) => {
-  document.body.classList.toggle('is-dark', dark)
-}, { immediate: true })
+watch(
+  isDarkMode,
+  (dark) => {
+    document.body.classList.toggle('is-dark', dark)
+  },
+  { immediate: true },
+)
 
 function toggleTheme() {
   isDarkMode.value = !isDarkMode.value
@@ -1189,7 +1229,9 @@ watch(calendarMonths, (months) => {
 })
 
 // Re-measure height whenever the displayed month changes
-watch(currentMonthKey, () => { updateSlideHeight() })
+watch(currentMonthKey, () => {
+  updateSlideHeight()
+})
 
 const availableKeys = computed(
   () =>
@@ -1254,13 +1296,19 @@ function onCalTouchEnd(e: TouchEvent) {
       class="theme-toggle"
       :title="isDarkMode ? 'Világos mód' : 'Sötét mód'"
       @click="toggleTheme"
-    >◑</button>
+    >
+      ◑
+    </button>
     <div v-if="loading" class="state-msg state-loading">
       <Transition name="weather-emoji" mode="out-in">
-        <span :key="loadingEmojiIdx" class="loading-emoji">{{ LOADING_EMOJIS[loadingOrder[loadingEmojiIdx]] }}</span>
+        <span :key="loadingEmojiIdx" class="loading-emoji">{{
+          LOADING_EMOJIS[loadingOrder[loadingEmojiIdx]]
+        }}</span>
       </Transition>
       <Transition name="weather-emoji" mode="out-in">
-        <span :key="loadingEmojiIdx" class="loading-text">{{ LOADING_TEXTS[loadingOrder[loadingEmojiIdx]] }}</span>
+        <span :key="loadingEmojiIdx" class="loading-text">{{
+          LOADING_TEXTS[loadingOrder[loadingEmojiIdx]]
+        }}</span>
       </Transition>
     </div>
     <div v-else-if="error" class="state-msg state-error">{{ error }}</div>
@@ -1301,7 +1349,9 @@ function onCalTouchEnd(e: TouchEvent) {
             </div>
             <span class="day-date">{{ fmtShortDate(day.target_date) }}</span>
           </div>
-          <span class="front-pill" :class="day.bg ? 'front-mixed' : day.style.pill">{{ day.style.label }}</span>
+          <span class="front-pill" :class="day.bg ? 'front-mixed' : day.style.pill">{{
+            day.style.label
+          }}</span>
           <div v-if="day.temp_min && day.temp_max" class="weather-col">
             <span class="weather-temp">{{ day.temp_min }} / {{ day.temp_max }}</span>
           </div>
@@ -1407,7 +1457,6 @@ function onCalTouchEnd(e: TouchEvent) {
             <div v-else class="cal-cell cal-cell--empty"></div>
           </template>
         </div>
-
       </div>
     </TransitionGroup>
 
@@ -1431,20 +1480,15 @@ function onCalTouchEnd(e: TouchEvent) {
             <button class="cal-popover-close" @click.stop="closeCalPopover">✕</button>
           </div>
           <div class="cal-popover-header-bottom">
-            <span
-              class="front-pill cal-popover-pill"
-              :class="selectedCalDay.style.pill"
-              >{{ selectedCalDay.style.label }}</span
-            >
+            <span class="front-pill cal-popover-pill" :class="selectedCalDay.style.pill">{{
+              selectedCalDay.style.label
+            }}</span>
             <span v-if="selectedCalDay.temp_min" class="cal-popover-temp"
               >{{ selectedCalDay.temp_min }} / {{ selectedCalDay.temp_max }}</span
             >
           </div>
         </div>
-        <div
-          v-if="selectedCalDay.entriesWithChanges.length"
-          class="timeline cal-popover-timeline"
-        >
+        <div v-if="selectedCalDay.entriesWithChanges.length" class="timeline cal-popover-timeline">
           <template v-for="(entry, i) in selectedCalDay.entriesWithChanges" :key="i">
             <div
               class="timeline-row"
@@ -1509,7 +1553,9 @@ function onCalTouchEnd(e: TouchEvent) {
   align-items: center;
   justify-content: center;
   opacity: 0.6;
-  transition: opacity 0.2s, box-shadow 0.2s;
+  transition:
+    opacity 0.2s,
+    box-shadow 0.2s;
   color: #444;
   user-select: none;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -1908,7 +1954,6 @@ function onCalTouchEnd(e: TouchEvent) {
   color: #888;
 }
 
-
 .cal-popover-temp {
   font-size: 13px;
   font-weight: 500;
@@ -2029,7 +2074,9 @@ function onCalTouchEnd(e: TouchEvent) {
 
 .weather-emoji-enter-active,
 .weather-emoji-leave-active {
-  transition: opacity 0.7s ease, transform 0.7s ease;
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s ease;
 }
 .weather-emoji-enter-from {
   opacity: 0;
@@ -2074,13 +2121,14 @@ function onCalTouchEnd(e: TouchEvent) {
 }
 
 .day-card--today {
-  transition: transform 0.4s ease-out, box-shadow 0.4s ease-out;
+  transition:
+    transform 0.4s ease-out,
+    box-shadow 0.4s ease-out;
 }
 
 .day-card--today.day-card--kissed {
   transform: scale(1.018);
 }
-
 
 .kiss-fly {
   position: absolute;
@@ -2095,12 +2143,23 @@ function onCalTouchEnd(e: TouchEvent) {
 }
 
 @keyframes kiss-pop {
-  0%   { transform: scale(0);   opacity: 0; }
-  30%  { transform: scale(1.4); opacity: 1; }
-  65%  { transform: scale(1.1); opacity: 1; }
-  100% { transform: scale(1);   opacity: 0; }
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(1.4);
+    opacity: 1;
+  }
+  65% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
 }
-
 
 .day-card--today {
   border: 2px solid #44403c;
@@ -2121,9 +2180,10 @@ function onCalTouchEnd(e: TouchEvent) {
   color: #fff;
   padding: 4px 12px;
   border-radius: 20px;
-  transition: background 0.2s ease, transform 0.15s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease;
 }
-
 
 .tomorrow-badge {
   font-size: 22px;
@@ -2333,7 +2393,6 @@ function onCalTouchEnd(e: TouchEvent) {
   flex-shrink: 0;
 }
 
-
 .weather-temp {
   font-size: 18px;
   font-weight: 600;
@@ -2456,59 +2515,147 @@ function onCalTouchEnd(e: TouchEvent) {
 
 /* Divider */
 .is-dark .history-divider::before,
-.is-dark .history-divider::after { background: rgba(255, 255, 255, 0.1); }
-.is-dark .history-divider-label  { color: #78716c; }
+.is-dark .history-divider::after {
+  background: rgba(255, 255, 255, 0.1);
+}
+.is-dark .history-divider-label {
+  color: #78716c;
+}
 
 /* Calendar month card */
-.is-dark .cal-month        { background: #242424; border-color: rgba(255, 255, 255, 0.08); }
-.is-dark .cal-month-label  { color: #a8a29e; }
-.is-dark .cal-weekday-header { color: #57534e; }
+.is-dark .cal-month {
+  background: #242424;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.is-dark .cal-month-label {
+  color: #a8a29e;
+}
+.is-dark .cal-weekday-header {
+  color: #57534e;
+}
 
 /* Nav */
-.is-dark .cal-nav-label              { color: #d6d3d1; }
-.is-dark .cal-nav-btn                { color: #78716c; }
-.is-dark .cal-nav-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.06); }
-.is-dark .cal-nav-btn:disabled       { color: #44403c; }
+.is-dark .cal-nav-label {
+  color: #d6d3d1;
+}
+.is-dark .cal-nav-btn {
+  color: #78716c;
+}
+.is-dark .cal-nav-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+.is-dark .cal-nav-btn:disabled {
+  color: #44403c;
+}
 
 /* Cells */
-.is-dark .cal-cell          { border-color: rgba(255, 255, 255, 0.08); }
-.is-dark .cal-cell:hover    { border-color: rgba(255, 255, 255, 0.22); }
-.is-dark .cal-cell--empty   { border-color: transparent; }
-.is-dark .cal-cell--future  { border-color: rgba(255, 255, 255, 0.05); }
-.is-dark .cal-cell--no-data .cal-day-num { color: rgba(255, 255, 255, 0.18); }
-.is-dark .cal-day-num       { color: #a8a29e; }
-.is-dark .cal-cell--in-stack { outline-color: rgba(255, 255, 255, 0.14); }
+.is-dark .cal-cell {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.is-dark .cal-cell:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+.is-dark .cal-cell--empty {
+  border-color: transparent;
+}
+.is-dark .cal-cell--future {
+  border-color: rgba(255, 255, 255, 0.05);
+}
+.is-dark .cal-cell--no-data .cal-day-num {
+  color: rgba(255, 255, 255, 0.18);
+}
+.is-dark .cal-day-num {
+  color: #a8a29e;
+}
+.is-dark .cal-cell--in-stack {
+  outline-color: rgba(255, 255, 255, 0.14);
+}
 .is-dark .cal-cell--today .cal-day-num {
   background: rgba(255, 255, 255, 0.82);
   color: #1c1917;
 }
-.is-dark .cal-cell--tomorrow .cal-day-num { border-color: rgba(255, 255, 255, 0.25); color: #a8a29e; }
-.is-dark .cal-cell--selected { outline-color: rgba(255, 255, 255, 0.4); }
+.is-dark .cal-cell--tomorrow .cal-day-num {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #a8a29e;
+}
+.is-dark .cal-cell--selected {
+  outline-color: rgba(255, 255, 255, 0.4);
+}
 
 /* Card cell & day-card backgrounds — all normalised to L≈27% */
-.is-dark .card-cold       { background: #2d4d6a; border-color: #3a6080; }
-.is-dark .card-warm       { background: #5c2e2e; border-color: #7a3c3c; }
-.is-dark .card-no         { background: #333030; border-color: #514e4b; }
-.is-dark .card-stationary { background: #6a4a1a; border-color: #8a6228; }
-.is-dark .card-double     { background: #3a2c60; border-color: #503880; }
+.is-dark .card-cold {
+  background: #2d4d6a;
+  border-color: #3a6080;
+}
+.is-dark .card-warm {
+  background: #5c2e2e;
+  border-color: #7a3c3c;
+}
+.is-dark .card-no {
+  background: #333030;
+  border-color: #514e4b;
+}
+.is-dark .card-stationary {
+  background: #6a4a1a;
+  border-color: #8a6228;
+}
+.is-dark .card-double {
+  background: #3a2c60;
+  border-color: #503880;
+}
 
 /* Front type pills */
-.is-dark .front-cold       { background: #2a4e72; color: #93c5fd; }
-.is-dark .front-warm       { background: #4e2828; color: #fca5a5; }
-.is-dark .front-no         { background: #3e3b37; color: #d6d3d1; }
-.is-dark .front-stationary { background: #4e3010; color: #fdba74; }
-.is-dark .front-double     { background: #3c2c6e; color: #c4b5fd; }
-.is-dark .front-mixed      { background: rgba(255, 255, 255, 0.12); color: #d6d3d1; }
+.is-dark .front-cold {
+  background: #2a4e72;
+  color: #93c5fd;
+}
+.is-dark .front-warm {
+  background: #4e2828;
+  color: #fca5a5;
+}
+.is-dark .front-no {
+  background: #3e3b37;
+  color: #d6d3d1;
+}
+.is-dark .front-stationary {
+  background: #4e3010;
+  color: #fdba74;
+}
+.is-dark .front-double {
+  background: #3c2c6e;
+  color: #c4b5fd;
+}
+.is-dark .front-mixed {
+  background: rgba(255, 255, 255, 0.12);
+  color: #d6d3d1;
+}
 
 /* Dots */
-.is-dark .dot-cold       { background: #60a5fa; border-color: #60a5fa; }
-.is-dark .dot-warm       { background: #f87171; border-color: #f87171; }
-.is-dark .dot-no         { background: #a8a29e; border-color: #a8a29e; }
-.is-dark .dot-stationary { background: #fb923c; border-color: #fb923c; }
-.is-dark .dot-double     { background: #a78bfa; border-color: #a78bfa; }
+.is-dark .dot-cold {
+  background: #60a5fa;
+  border-color: #60a5fa;
+}
+.is-dark .dot-warm {
+  background: #f87171;
+  border-color: #f87171;
+}
+.is-dark .dot-no {
+  background: #a8a29e;
+  border-color: #a8a29e;
+}
+.is-dark .dot-stationary {
+  background: #fb923c;
+  border-color: #fb923c;
+}
+.is-dark .dot-double {
+  background: #a78bfa;
+  border-color: #a78bfa;
+}
 
 /* Cal change dot */
-.is-dark .cal-change-dot { background: rgba(255, 255, 255, 0.35); }
+.is-dark .cal-change-dot {
+  background: rgba(255, 255, 255, 0.35);
+}
 
 /* Popover (teleported to body — body.is-dark is the ancestor) */
 .is-dark .cal-popover {
@@ -2516,42 +2663,105 @@ function onCalTouchEnd(e: TouchEvent) {
   border-color: rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
 }
-.is-dark .cal-popover-date     { color: #78716c; }
-.is-dark .cal-popover-temp     { color: #d6d3d1; }
-.is-dark .cal-popover-close    { color: #57534e; }
-.is-dark .cal-popover-close:hover { color: #a8a29e; }
-.is-dark .cal-popover-timeline { border-top-color: rgba(255, 255, 255, 0.07); }
-.is-dark .cal-popover-no-changes { color: #57534e; }
+.is-dark .cal-popover-date {
+  color: #78716c;
+}
+.is-dark .cal-popover-temp {
+  color: #d6d3d1;
+}
+.is-dark .cal-popover-close {
+  color: #57534e;
+}
+.is-dark .cal-popover-close:hover {
+  color: #a8a29e;
+}
+.is-dark .cal-popover-timeline {
+  border-top-color: rgba(255, 255, 255, 0.07);
+}
+.is-dark .cal-popover-no-changes {
+  color: #57534e;
+}
 
 /* Timeline */
-.is-dark .timeline-row           { border-top-color: rgba(255, 255, 255, 0.06); }
-.is-dark .timeline-row--connected::after { background: rgba(255, 255, 255, 0.12); }
-.is-dark .tl-time  { color: #78716c; }
-.is-dark .tl-from  { color: #78716c; }
-.is-dark .tl-arrow { color: #57534e; }
-.is-dark .tl-to    { color: #d6d3d1; }
-.is-dark .tl-sep   { color: #44403c; }
-.is-dark .tl-label { color: #a8a29e; }
+.is-dark .timeline-row {
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+.is-dark .timeline-row--connected::after {
+  background: rgba(255, 255, 255, 0.12);
+}
+.is-dark .tl-time {
+  color: #78716c;
+}
+.is-dark .tl-from {
+  color: #78716c;
+}
+.is-dark .tl-arrow {
+  color: #57534e;
+}
+.is-dark .tl-to {
+  color: #d6d3d1;
+}
+.is-dark .tl-sep {
+  color: #44403c;
+}
+.is-dark .tl-label {
+  color: #a8a29e;
+}
 
 /* Calendar extras */
-.is-dark .cal-temp      { color: #78716c; }
-.is-dark .cal-dot       { background: rgba(255, 255, 255, 0.15); }
-.is-dark .cal-dot--active { background: rgba(255, 255, 255, 0.65); }
+.is-dark .cal-temp {
+  color: #78716c;
+}
+.is-dark .cal-dot {
+  background: rgba(255, 255, 255, 0.15);
+}
+.is-dark .cal-dot--active {
+  background: rgba(255, 255, 255, 0.65);
+}
 
 /* ── Recent day cards ── */
-.is-dark .day-card                    { border-color: rgba(255, 255, 255, 0.10); }
-.is-dark .day-card::after             { opacity: 0.25; }
-.is-dark .day-card--today             { border-color: rgba(255, 255, 255, 0.70); box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4); }
-.is-dark .day-card--gradient.day-card--today { border-color: rgba(255, 255, 255, 0.25); }
-.is-dark .day-card--tomorrow          { border-color: rgba(255, 255, 255, 0.25); }
-.is-dark .day-card--has-history       { box-shadow: inset 0 -3px 0 rgba(255, 255, 255, 0.07); }
+.is-dark .day-card {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.is-dark .day-card::after {
+  opacity: 0.25;
+}
+.is-dark .day-card--today {
+  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+.is-dark .day-card--gradient.day-card--today {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+.is-dark .day-card--tomorrow {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+.is-dark .day-card--has-history {
+  box-shadow: inset 0 -3px 0 rgba(255, 255, 255, 0.07);
+}
 
 /* Badges & text */
-.is-dark .today-badge    { background: rgba(255, 255, 255, 0.88); color: #1c1917; }
-.is-dark .tomorrow-badge { color: #78716c; border-color: rgba(255, 255, 255, 0.2); }
-.is-dark .yesterday-badge { color: #d6d3d1; }
-.is-dark .day-weekday   { color: #d6d3d1; }
-.is-dark .day-date       { color: #78716c; }
-.is-dark .weather-temp   { color: #d6d3d1; }
-.is-dark .card-right     { border-color: rgba(255, 255, 255, 0.08); }
+.is-dark .today-badge {
+  background: rgba(255, 255, 255, 0.88);
+  color: #1c1917;
+}
+.is-dark .tomorrow-badge {
+  color: #78716c;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.is-dark .yesterday-badge {
+  color: #d6d3d1;
+}
+.is-dark .day-weekday {
+  color: #d6d3d1;
+}
+.is-dark .day-date {
+  color: #78716c;
+}
+.is-dark .weather-temp {
+  color: #d6d3d1;
+}
+.is-dark .card-right {
+  border-color: rgba(255, 255, 255, 0.08);
+}
 </style>
