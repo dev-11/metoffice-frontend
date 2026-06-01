@@ -2115,7 +2115,7 @@ function onCalTouchEnd(e: TouchEvent) {
   top: -0.2em;
   font-size: 4rem;
   line-height: 1;
-  opacity: 0.15;
+  opacity: 0.25;
   pointer-events: none;
   user-select: none;
 }
