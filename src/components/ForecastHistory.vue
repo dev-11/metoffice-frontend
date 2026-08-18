@@ -975,6 +975,7 @@ const _oldSample: unknown[] = [
 const days = computed(() =>
   history.value.map((day) => {
     const latest = day.forecasts[day.forecasts.length - 1]
+    const hasData = day.forecasts.length > 0
     const style =
       latest && isFrontTypeFinal(latest, day.target_date) ? frontStyle(latest.data.front_type) : PENDING_STYLE
     const latestWithTemp = [...day.forecasts]
@@ -1008,6 +1009,7 @@ const days = computed(() =>
     return {
       ...day,
       latest,
+      hasData,
       style,
       bg,
       hasOnDayChanges,
@@ -1357,7 +1359,7 @@ function onCalTouchEnd(e: TouchEvent) {
       v-for="day in recentDays"
       :key="day.target_date"
       class="day-card"
-      :data-emoji="specialEmoji(day.target_date) || day.style.emoji"
+      :data-emoji="specialEmoji(day.target_date) || (day.hasData ? day.style.emoji : '')"
       :class="[
         day.bg ? 'day-card--gradient' : day.style.card,
         {
@@ -1389,9 +1391,12 @@ function onCalTouchEnd(e: TouchEvent) {
             </div>
             <span class="day-date">{{ fmtShortDate(day.target_date) }}</span>
           </div>
-          <span class="front-pill" :class="day.bg ? 'front-mixed' : day.style.pill">{{
-            day.style.label
-          }}</span>
+          <span
+            v-if="day.hasData"
+            class="front-pill"
+            :class="day.bg ? 'front-mixed' : day.style.pill"
+            >{{ day.style.label }}</span
+          >
           <div v-if="day.temp_min && day.temp_max" class="weather-col">
             <span class="weather-temp">{{ day.temp_min }} / {{ day.temp_max }}</span>
           </div>
@@ -1520,9 +1525,12 @@ function onCalTouchEnd(e: TouchEvent) {
             <button class="cal-popover-close" @click.stop="closeCalPopover">✕</button>
           </div>
           <div class="cal-popover-header-bottom">
-            <span class="front-pill cal-popover-pill" :class="selectedCalDay.style.pill">{{
-              selectedCalDay.style.label
-            }}</span>
+            <span
+              v-if="selectedCalDay.hasData"
+              class="front-pill cal-popover-pill"
+              :class="selectedCalDay.style.pill"
+              >{{ selectedCalDay.style.label }}</span
+            >
             <span v-if="selectedCalDay.temp_min" class="cal-popover-temp"
               >{{ selectedCalDay.temp_min }} / {{ selectedCalDay.temp_max }}</span
             >
@@ -2470,10 +2478,8 @@ function onCalTouchEnd(e: TouchEvent) {
   color: #5b21b6;
 }
 .front-pending {
-  background: transparent;
+  background: #e7e5e4;
   color: #78716c;
-  border: 1.5px solid #a8a29e;
-  padding: 8.5px 14.5px;
 }
 
 .timeline {
@@ -2690,9 +2696,8 @@ function onCalTouchEnd(e: TouchEvent) {
   color: #d6d3d1;
 }
 .is-dark .front-pending {
-  background: transparent;
+  background: #3e3b37;
   color: #a8a29e;
-  border-color: #6b6863;
 }
 
 /* Dots */
