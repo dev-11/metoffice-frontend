@@ -39,21 +39,27 @@ interface FieldChange {
 }
 
 // The datasource only finalizes a day's front type once it's observed for that
-// day itself, at/after this hour (local time) — earlier fetches (e.g. a midnight
-// refresh, or forecasts made a day ahead) return a placeholder value that can
-// legitimately equal a real value like "no_front", so we can't tell them apart
-// by value alone. We key off observation time instead of value.
+// day itself, at/after this hour in the timestamp's own recorded offset —
+// earlier fetches (e.g. a midnight refresh, or forecasts made a day ahead)
+// return a placeholder value that can legitimately equal a real value like
+// "no_front", so we can't tell them apart by value alone. We key off
+// observation time instead of value.
 const FRONT_TYPE_STABLE_HOUR = 1
 
 function isFrontTypeFinal(forecast: Forecast, targetDate: string): boolean {
   if (!forecast.data.front_type) return false
   if (forecast.observed_at.slice(0, 10) !== targetDate) return false
-  return new Date(forecast.observed_at).getHours() >= FRONT_TYPE_STABLE_HOUR
+  // Read the hour straight from the ISO string's own offset (e.g. "T00:02:08+02:00")
+  // instead of Date#getHours(), which reinterprets it in the viewer's local
+  // timezone — the cutoff must match the backend's clock, not the reader's.
+  const hour = Number(forecast.observed_at.slice(11, 13))
+  return hour >= FRONT_TYPE_STABLE_HOUR
 }
 
 function getChanges(prev: Forecast, curr: Forecast, targetDate: string): FieldChange[] {
   const changes: FieldChange[] = []
-  const frontTypeFinal = isFrontTypeFinal(prev, targetDate) && isFrontTypeFinal(curr, targetDate)
+  const frontTypeFinal =
+    isFrontTypeFinal(prev, targetDate) && isFrontTypeFinal(curr, targetDate)
   if (frontTypeFinal && prev.data.front_type !== curr.data.front_type) {
     changes.push({
       field: 'front_type',
@@ -2288,7 +2294,7 @@ function onCalTouchEnd(e: TouchEvent) {
   }
   .card-left {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 130px auto;
     grid-template-rows: auto auto;
     gap: 4px 12px;
     align-items: center;
@@ -2460,7 +2466,7 @@ function onCalTouchEnd(e: TouchEvent) {
   color: #5b21b6;
 }
 .front-pending {
-  background: #e7e5e4;
+  background: #f1efe8;
   color: #78716c;
 }
 
@@ -2678,7 +2684,7 @@ function onCalTouchEnd(e: TouchEvent) {
   color: #d6d3d1;
 }
 .is-dark .front-pending {
-  background: #3e3b37;
+  background: #333030;
   color: #a8a29e;
 }
 
