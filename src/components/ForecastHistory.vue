@@ -143,7 +143,7 @@ const PENDING_STYLE = {
   label: 'Még nem tudni',
   short: 'Még nem tudni',
   card: 'card-pending',
-  emoji: '🤷',
+  emoji: '🤔',
 }
 
 function cardBackground(day: DayHistory) {
@@ -2472,7 +2472,7 @@ function onCalTouchEnd(e: TouchEvent) {
 .front-pending {
   background: transparent;
   color: #78716c;
-  border: 1.5px dashed #a8a29e;
+  border: 1.5px solid #a8a29e;
   padding: 8.5px 14.5px;
 }
 
@@ -2531,7 +2531,6 @@ function onCalTouchEnd(e: TouchEvent) {
 .dot-pending {
   background: transparent;
   border-color: #a8a29e;
-  border-style: dashed;
 }
 
 .tl-time {
