@@ -195,22 +195,6 @@ const history = ref<DayHistory[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 
-// The backend only saves an observation once the scrape actually contains a
-// front type, so today's and tomorrow's entries simply don't exist yet before
-// that happens (e.g. between midnight and ~1am for today, always for tomorrow
-// until its day arrives) — inject empty placeholders so they still show as
-// "pending" instead of just being missing from the list.
-function ensurePlaceholderDays(list: DayHistory[]): DayHistory[] {
-  const today = new Date()
-  const tomorrow = new Date(today)
-  tomorrow.setDate(today.getDate() + 1)
-  const missingDates = [tomorrow, today] // descending, matching the list's sort order
-    .map((d) => d.toLocaleDateString('en-CA'))
-    .filter((dateStr) => !list.some((d) => d.target_date === dateStr))
-  const placeholders = missingDates.map((target_date) => ({ target_date, forecasts: [] }))
-  return [...placeholders, ...list]
-}
-
 const LOADING_EMOJIS = ['☀️', '🌤️', '⛅', '🌥️', '🌦️', '🌧️', '⛈️', '🌨️', '❄️', '🌬️', '🌈']
 const LOADING_TEXTS = [
   'Licking a finger and holding it up…',
@@ -339,9 +323,7 @@ onMounted(async () => {
         },
       })),
     }))
-    history.value = ensurePlaceholderDays(
-      normalized.sort((a, b) => b.target_date.localeCompare(a.target_date)),
-    )
+    history.value = normalized.sort((a, b) => b.target_date.localeCompare(a.target_date))
   } catch (_e) {
     const fixedOld: DayHistory[] = (_oldSample as any[]).map((day) => ({
       target_date: day.target_date,
