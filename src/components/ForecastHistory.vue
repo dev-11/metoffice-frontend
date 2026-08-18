@@ -38,9 +38,23 @@ interface FieldChange {
   to: string
 }
 
-function getChanges(prev: Forecast, curr: Forecast): FieldChange[] {
+// The datasource only finalizes a day's front type once it's observed for that
+// day itself, at/after this hour (local time) — earlier fetches (e.g. a midnight
+// refresh, or forecasts made a day ahead) return a placeholder value that can
+// legitimately equal a real value like "no_front", so we can't tell them apart
+// by value alone. We key off observation time instead of value.
+const FRONT_TYPE_STABLE_HOUR = 1
+
+function isFrontTypeFinal(forecast: Forecast, targetDate: string): boolean {
+  if (!forecast.data.front_type) return false
+  if (forecast.observed_at.slice(0, 10) !== targetDate) return false
+  return new Date(forecast.observed_at).getHours() >= FRONT_TYPE_STABLE_HOUR
+}
+
+function getChanges(prev: Forecast, curr: Forecast, targetDate: string): FieldChange[] {
   const changes: FieldChange[] = []
-  if (prev.data.front_type !== curr.data.front_type) {
+  const frontTypeFinal = isFrontTypeFinal(prev, targetDate) && isFrontTypeFinal(curr, targetDate)
+  if (frontTypeFinal && prev.data.front_type !== curr.data.front_type) {
     changes.push({
       field: 'front_type',
       label: 'front',
@@ -123,10 +137,17 @@ const FRONT_STYLES: Record<
   },
 }
 
+const PENDING_STYLE = {
+  pill: 'front-pending',
+  dot: 'dot-pending',
+  label: 'Még nem tudni',
+  short: 'Még nem tudni',
+  card: 'card-pending',
+  emoji: '🤷',
+}
+
 function cardBackground(day: DayHistory) {
-  const sameDayForecasts = day.forecasts.filter(
-    (f) => f.observed_at.slice(0, 10) === day.target_date,
-  )
+  const sameDayForecasts = day.forecasts.filter((f) => isFrontTypeFinal(f, day.target_date))
   if (sameDayForecasts.length < 2) return null
   const uniqueTypes = [...new Set(sameDayForecasts.map((f) => f.data.front_type))]
   if (uniqueTypes.length < 2) return null
@@ -173,6 +194,22 @@ function fmtShortDate(dateStr: string) {
 const history = ref<DayHistory[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
+
+// The backend only saves an observation once the scrape actually contains a
+// front type, so today's and tomorrow's entries simply don't exist yet before
+// that happens (e.g. between midnight and ~1am for today, always for tomorrow
+// until its day arrives) — inject empty placeholders so they still show as
+// "pending" instead of just being missing from the list.
+function ensurePlaceholderDays(list: DayHistory[]): DayHistory[] {
+  const today = new Date()
+  const tomorrow = new Date(today)
+  tomorrow.setDate(today.getDate() + 1)
+  const missingDates = [tomorrow, today] // descending, matching the list's sort order
+    .map((d) => d.toLocaleDateString('en-CA'))
+    .filter((dateStr) => !list.some((d) => d.target_date === dateStr))
+  const placeholders = missingDates.map((target_date) => ({ target_date, forecasts: [] }))
+  return [...placeholders, ...list]
+}
 
 const LOADING_EMOJIS = ['☀️', '🌤️', '⛅', '🌥️', '🌦️', '🌧️', '⛈️', '🌨️', '❄️', '🌬️', '🌈']
 const LOADING_TEXTS = [
@@ -302,7 +339,9 @@ onMounted(async () => {
         },
       })),
     }))
-    history.value = normalized.sort((a, b) => b.target_date.localeCompare(a.target_date))
+    history.value = ensurePlaceholderDays(
+      normalized.sort((a, b) => b.target_date.localeCompare(a.target_date)),
+    )
   } catch (_e) {
     const fixedOld: DayHistory[] = (_oldSample as any[]).map((day) => ({
       target_date: day.target_date,
@@ -936,21 +975,22 @@ const _oldSample: unknown[] = [
 const days = computed(() =>
   history.value.map((day) => {
     const latest = day.forecasts[day.forecasts.length - 1]
-    const style = frontStyle(latest.data.front_type)
+    const style =
+      latest && isFrontTypeFinal(latest, day.target_date) ? frontStyle(latest.data.front_type) : PENDING_STYLE
     const latestWithTemp = [...day.forecasts]
       .reverse()
       .find((f) => f.data.temp_min && f.data.temp_max)
     const temp_min = latestWithTemp?.data.temp_min
     const temp_max = latestWithTemp?.data.temp_max
     const bg = cardBackground(day)
-    const hasOnDayChanges = day.forecasts.length >= 2
     const onDayList = day.forecasts
     const entriesWithChanges = onDayList
       .map((entry, i) => ({
         ...entry,
-        changes: i > 0 ? getChanges(onDayList[i - 1], entry) : ([] as FieldChange[]),
+        changes: i > 0 ? getChanges(onDayList[i - 1], entry, day.target_date) : ([] as FieldChange[]),
       }))
       .filter((e) => e.changes.length > 0)
+    const hasOnDayChanges = entriesWithChanges.length > 0
     const today = new Date()
     const tomorrow = new Date(today)
     tomorrow.setDate(today.getDate() + 1)
@@ -2357,6 +2397,11 @@ function onCalTouchEnd(e: TouchEvent) {
   background: #ede9fe;
   border-color: #c4b5fd;
 }
+.card-pending {
+  background: #f1efe8;
+  border-color: #d3d1c7;
+  border-style: dashed;
+}
 
 .card-title-row {
   display: flex;
@@ -2424,6 +2469,12 @@ function onCalTouchEnd(e: TouchEvent) {
   background: #ede9fe;
   color: #5b21b6;
 }
+.front-pending {
+  background: transparent;
+  color: #78716c;
+  border: 1.5px dashed #a8a29e;
+  padding: 8.5px 14.5px;
+}
 
 .timeline {
   padding-top: 0;
@@ -2476,6 +2527,11 @@ function onCalTouchEnd(e: TouchEvent) {
 .dot-double {
   background: #c4b5fd;
   border-color: #7c3aed;
+}
+.dot-pending {
+  background: transparent;
+  border-color: #a8a29e;
+  border-style: dashed;
 }
 
 .tl-time {
@@ -2603,6 +2659,11 @@ function onCalTouchEnd(e: TouchEvent) {
   background: #3a2c60;
   border-color: #503880;
 }
+.is-dark .card-pending {
+  background: #333030;
+  border-color: #6b6863;
+  border-style: dashed;
+}
 
 /* Front type pills */
 .is-dark .front-cold {
@@ -2629,6 +2690,11 @@ function onCalTouchEnd(e: TouchEvent) {
   background: rgba(255, 255, 255, 0.12);
   color: #d6d3d1;
 }
+.is-dark .front-pending {
+  background: transparent;
+  color: #a8a29e;
+  border-color: #6b6863;
+}
 
 /* Dots */
 .is-dark .dot-cold {
@@ -2650,6 +2716,10 @@ function onCalTouchEnd(e: TouchEvent) {
 .is-dark .dot-double {
   background: #a78bfa;
   border-color: #a78bfa;
+}
+.is-dark .dot-pending {
+  background: transparent;
+  border-color: #6b6863;
 }
 
 /* Cal change dot */
