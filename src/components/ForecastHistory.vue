@@ -143,14 +143,25 @@ const FRONT_STYLES: Record<
   },
 }
 
-const PENDING_STYLE = {
-  pill: 'front-pending',
-  dot: 'dot-pending',
-  label: 'Még nem tudni',
-  short: 'Még nem tudni',
-  card: 'card-pending',
-  emoji: '🤔',
-}
+const PENDING_STYLES = [
+  {
+    pill: 'front-pending',
+    dot: 'dot-pending',
+    label: 'Még nem tudni',
+    short: 'Még nem tudni',
+    card: 'card-pending',
+    emoji: '🤔',
+  },
+  {
+    pill: 'front-pending',
+    dot: 'dot-pending',
+    label: 'Titok',
+    short: 'Titok',
+    card: 'card-pending',
+    emoji: '🤫',
+  },
+]
+const PENDING_STYLE = PENDING_STYLES[Math.floor(Math.random() * PENDING_STYLES.length)]
 
 function cardBackground(day: DayHistory) {
   const sameDayForecasts = day.forecasts.filter((f) => isFrontTypeFinal(f, day.target_date))
