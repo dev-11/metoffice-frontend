@@ -2305,7 +2305,7 @@ function onCalTouchEnd(e: TouchEvent) {
   }
   .card-left {
     display: grid;
-    grid-template-columns: 130px auto;
+    grid-template-columns: 130px 1fr;
     grid-template-rows: auto auto;
     gap: 4px 12px;
     align-items: center;
@@ -2327,11 +2327,13 @@ function onCalTouchEnd(e: TouchEvent) {
     grid-column: 2;
     grid-row: 1;
     align-self: center;
+    justify-self: end;
   }
   .weather-col {
     grid-column: 2;
     grid-row: 2;
     align-self: center;
+    justify-self: end;
   }
 }
 
